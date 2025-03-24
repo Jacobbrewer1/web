@@ -6,7 +6,7 @@ import (
 
 // Set represents a mathematical set: https://en.wikipedia.org/wiki/Set_(mathematics)#
 type Set[T comparable] struct {
-	sync.Mutex
+	mut   sync.Mutex
 	items map[T]bool
 }
 
@@ -24,22 +24,22 @@ func NewSet[T comparable](items ...T) *Set[T] {
 
 // Add adds an item to the set.
 func (s *Set[T]) Add(item T) {
-	s.Lock()
-	defer s.Unlock()
+	s.mut.Lock()
+	defer s.mut.Unlock()
 	s.items[item] = true
 }
 
 // Remove removes an item from the set.
 func (s *Set[T]) Remove(item T) {
-	s.Lock()
-	defer s.Unlock()
+	s.mut.Lock()
+	defer s.mut.Unlock()
 	delete(s.items, item)
 }
 
 // Contains returns whether the set contains item.
 func (s *Set[T]) Contains(item T) bool {
-	s.Lock()
-	defer s.Unlock()
+	s.mut.Lock()
+	defer s.mut.Unlock()
 	_, ok := s.items[item]
 	return ok
 }
@@ -47,10 +47,10 @@ func (s *Set[T]) Contains(item T) bool {
 // Difference returns the set of all things that belong to A, but not B.
 func (s *Set[T]) Difference(b *Set[T]) *Set[T] {
 	s3 := NewSet[T]()
-	s.Lock()
-	b.Lock()
-	defer b.Unlock()
-	defer s.Unlock()
+	s.mut.Lock()
+	b.mut.Lock()
+	defer b.mut.Unlock()
+	defer s.mut.Unlock()
 
 	for k := range s.items {
 		if !b.items[k] {
@@ -64,10 +64,10 @@ func (s *Set[T]) Difference(b *Set[T]) *Set[T] {
 // Union returns the set of all things that belong in A, in B or in both.
 func (s *Set[T]) Union(b *Set[T]) *Set[T] {
 	s3 := NewSet[T]()
-	s.Lock()
-	b.Lock()
-	defer b.Unlock()
-	defer s.Unlock()
+	s.mut.Lock()
+	b.mut.Lock()
+	defer b.mut.Unlock()
+	defer s.mut.Unlock()
 
 	for k := range s.items {
 		s3.Add(k)
@@ -82,8 +82,8 @@ func (s *Set[T]) Union(b *Set[T]) *Set[T] {
 
 // Each calls fn on each item of the set.
 func (s *Set[T]) Each(fn func(item T)) {
-	s.Lock()
-	defer s.Unlock()
+	s.mut.Lock()
+	defer s.mut.Unlock()
 
 	for k := range s.items {
 		fn(k)
@@ -92,8 +92,8 @@ func (s *Set[T]) Each(fn func(item T)) {
 
 // Items returns the items in the set as a slice.
 func (s *Set[T]) Items() []T {
-	s.Lock()
-	defer s.Unlock()
+	s.mut.Lock()
+	defer s.mut.Unlock()
 
 	keys := make([]T, 0, len(s.items))
 	for k := range s.items {

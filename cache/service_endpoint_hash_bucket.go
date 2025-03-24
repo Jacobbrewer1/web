@@ -20,7 +20,7 @@ import (
 // serviceEndpointHashBucket represents a mechanism which determine whether the current application instance should process
 // a particular key. The bucket size is determined by the number of active endpoints in the supplied Kubernetes service.
 type serviceEndpointHashBucket struct {
-	mtx               sync.Mutex
+	mut               sync.Mutex
 	hr                *hashring.HashRing
 	l                 *slog.Logger
 	k                 kubernetes.Interface
@@ -62,8 +62,8 @@ func (sb *serviceEndpointHashBucket) Start(ctx context.Context) error {
 	currentHostSet := endpointsToSet(currentEndpoints)
 	sb.l.Info("initialising hash ring with hosts", slog.Any(logging.KeyHosts, currentHostSet.Items()))
 
-	sb.mtx.Lock()
-	defer sb.mtx.Unlock()
+	sb.mut.Lock()
+	defer sb.mut.Unlock()
 	sb.hr = hashring.New(currentHostSet.Items())
 
 	sb.informerFactory.Start(ctx.Done())
@@ -77,8 +77,8 @@ func (sb *serviceEndpointHashBucket) Start(ctx context.Context) error {
 
 // InBucket returns whether the supplied key is processed by this endpoint.
 func (sb *serviceEndpointHashBucket) InBucket(key string) bool {
-	sb.mtx.Lock()
-	defer sb.mtx.Unlock()
+	sb.mut.Lock()
+	defer sb.mut.Unlock()
 
 	node, _ := sb.hr.GetNode(key)
 	return node == sb.thisPod
@@ -86,28 +86,28 @@ func (sb *serviceEndpointHashBucket) InBucket(key string) bool {
 
 // onEndpointUpdate is called when a change to an endpoint is made. If the endpoint that has changed is
 // related to this service, the internal hashring is updated to represent the new set of nodes.
-func (sb *serviceEndpointHashBucket) onEndpointUpdate(old any, new any) {
-	oldEndpoints, ok := old.(*corev1.Endpoints)
+func (sb *serviceEndpointHashBucket) onEndpointUpdate(oldEndpoints, newEndpoints any) {
+	coreOldEndpoints, ok := oldEndpoints.(*corev1.Endpoints)
 	if !ok {
 		return
 	}
 
-	newEndpoints, ok := new.(*corev1.Endpoints)
+	coreNewEndpoints, ok := newEndpoints.(*corev1.Endpoints)
 	if !ok {
 		return
 	}
 
-	if !(newEndpoints.Name == sb.appName && newEndpoints.Namespace == sb.appNamespace) {
+	if !(coreNewEndpoints.Name == sb.appName && coreNewEndpoints.Namespace == sb.appNamespace) {
 		return
 	}
 
-	a := endpointsToSet(oldEndpoints)
-	b := endpointsToSet(newEndpoints)
+	a := endpointsToSet(coreOldEndpoints)
+	b := endpointsToSet(coreNewEndpoints)
 	removed := a.Difference(b)
 	added := b.Difference(a)
 
-	sb.mtx.Lock()
-	defer sb.mtx.Unlock()
+	sb.mut.Lock()
+	defer sb.mut.Unlock()
 
 	if len(added.Items()) == 0 && len(removed.Items()) == 0 {
 		return
@@ -129,7 +129,7 @@ func (sb *serviceEndpointHashBucket) onEndpointUpdate(old any, new any) {
 
 // endpointsToSet converts input endpoints into a Set of IP addresses.
 func endpointsToSet(endpoints *corev1.Endpoints) *slices.Set[string] {
-	s := new(slices.Set[string])
+	s := slices.NewSet[string]()
 
 	for _, subset := range endpoints.Subsets {
 		for _, address := range subset.Addresses {
