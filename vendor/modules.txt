@@ -261,6 +261,9 @@ github.com/ryanuber/go-glob
 # github.com/sagikazarmark/locafero v0.7.0
 ## explicit; go 1.21
 github.com/sagikazarmark/locafero
+# github.com/serialx/hashring v0.0.0-20200727003509-22c0c7ab6b1b
+## explicit
+github.com/serialx/hashring
 # github.com/sourcegraph/conc v0.3.0
 ## explicit; go 1.19
 github.com/sourcegraph/conc

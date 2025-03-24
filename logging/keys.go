@@ -36,4 +36,10 @@ const (
 
 	// KeyState represents the key for the state.
 	KeyState = `state`
+
+	// KeyHosts represents the key for the hosts.
+	KeyHosts = `hosts`
+
+	// KeyItem represents the key for the items.
+	KeyItem = `item`
 )
