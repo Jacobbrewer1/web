@@ -7,6 +7,8 @@ const (
 	kubernetesNamespacePath = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 )
 
+var PodName = os.Getenv("HOSTNAME")
+
 func GetDeployedKubernetesNamespace() (string, error) {
 	got, err := os.ReadFile(kubernetesNamespacePath)
 	if err != nil {

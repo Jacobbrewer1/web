@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/alexliesenfeld/health"
@@ -28,11 +27,6 @@ import (
 var (
 	ErrNilVaultClient = errors.New("nil vault client")
 	ErrNoHostname     = errors.New("no hostname provided")
-)
-
-var (
-	// hostname is the kubernetes pod name.
-	hostname = os.Getenv("HOSTNAME")
 )
 
 // HealthCheckFunc is a function that performs a health check.
@@ -120,7 +114,7 @@ func WithLeaderElection(lockName string) StartOption {
 	return func(a *App) error {
 		if a.kubeClient == nil {
 			return errors.New("must set up kube client before leader election, ensure WithInClusterKubeClient is called")
-		} else if hostname == "" {
+		} else if utils.PodName == "" {
 			return ErrNoHostname
 		}
 
@@ -143,7 +137,7 @@ func WithLeaderElection(lockName string) StartOption {
 				},
 				Client: a.kubeClient.CoordinationV1(),
 				LockConfig: resourcelock.ResourceLockConfig{
-					Identity: hostname,
+					Identity: utils.PodName,
 				},
 			},
 			LeaseDuration: 15 * time.Second,
