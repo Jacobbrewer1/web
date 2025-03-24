@@ -13,6 +13,7 @@ import (
 	"github.com/jacobbrewer1/goredis"
 	"github.com/jacobbrewer1/vaulty"
 	"github.com/jacobbrewer1/vaulty/repositories"
+	"github.com/jacobbrewer1/web/cache"
 	"github.com/jacobbrewer1/web/logging"
 	"github.com/jacobbrewer1/web/utils"
 	"github.com/jacobbrewer1/workerpool"
@@ -291,5 +292,31 @@ func WithIndefiniteAsyncTask(name string, fn AsyncTaskFunc) StartOption {
 	return func(a *App) error {
 		a.indefiniteAsyncTasks.Store(name, fn)
 		return nil
+	}
+}
+
+// WithServiceEndpointHashBucket is a StartOption that sets up the service endpoint hash bucket.
+func WithServiceEndpointHashBucket(appName string) StartOption {
+	return func(a *App) error {
+		if a.kubeClient == nil {
+			return errors.New("must set up kube client before service endpoint hash bucket, ensure WithInClusterKubeClient is called")
+		}
+
+		ns, err := utils.GetDeployedKubernetesNamespace()
+		if err != nil {
+			return fmt.Errorf("failed to get deployed namespace: %w", err)
+		}
+
+		sb := cache.NewServiceEndpointHashBucket(
+			logging.LoggerWithComponent(a.l, "service_endpoint_hash_bucket"),
+			a.kubeClient,
+			appName,
+			ns,
+			utils.PodName,
+		)
+
+		a.serviceEndpointHashBucket = sb
+
+		return sb.Start(a.baseCtx)
 	}
 }
