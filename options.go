@@ -296,7 +296,7 @@ func WithIndefiniteAsyncTask(name string, fn AsyncTaskFunc) StartOption {
 }
 
 // WithServiceEndpointHashBucket is a StartOption that sets up the service endpoint hash bucket.
-func WithServiceEndpointHashBucket(serviceName string) StartOption {
+func WithServiceEndpointHashBucket(appName string) StartOption {
 	return func(a *App) error {
 		if a.kubeClient == nil {
 			return errors.New("must set up kube client before service endpoint hash bucket, ensure WithInClusterKubeClient is called")
@@ -310,7 +310,7 @@ func WithServiceEndpointHashBucket(serviceName string) StartOption {
 		sb := cache.NewServiceEndpointHashBucket(
 			logging.LoggerWithComponent(a.l, "service_endpoint_hash_bucket"),
 			a.kubeClient,
-			serviceName,
+			appName,
 			ns,
 			utils.PodName,
 		)
