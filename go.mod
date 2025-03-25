@@ -15,7 +15,7 @@ require (
 	github.com/serialx/hashring v0.0.0-20200727003509-22c0c7ab6b1b
 	github.com/spf13/viper v1.20.0
 	github.com/stretchr/testify v1.10.0
-	github.com/vektra/mockery/v2 v2.53.0
+	github.com/vektra/mockery/v2 v2.53.3
 	k8s.io/api v0.32.3
 	k8s.io/apimachinery v0.32.3
 	k8s.io/client-go v0.32.3
