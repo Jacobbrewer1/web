@@ -97,7 +97,7 @@ func (sb *serviceEndpointHashBucket) onEndpointUpdate(oldEndpoints, newEndpoints
 		return
 	}
 
-	if !(coreNewEndpoints.Name == sb.appName && coreNewEndpoints.Namespace == sb.appNamespace) {
+	if coreNewEndpoints.Name != sb.appName || coreNewEndpoints.Namespace != sb.appNamespace {
 		return
 	}
 
