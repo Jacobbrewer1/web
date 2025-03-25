@@ -42,4 +42,7 @@ const (
 
 	// KeyItem represents the key for the items.
 	KeyItem = `item`
+
+	// KeyHandler represents the key for the handler.
+	KeyHandler = `handler`
 )
