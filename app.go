@@ -16,6 +16,7 @@ import (
 	"github.com/jacobbrewer1/uhttp"
 	"github.com/jacobbrewer1/vaulty"
 	"github.com/jacobbrewer1/vaulty/repositories"
+	"github.com/jacobbrewer1/web/cache"
 	"github.com/jacobbrewer1/web/logging"
 	"github.com/jacobbrewer1/web/utils"
 	"github.com/jacobbrewer1/workerpool"
@@ -85,6 +86,9 @@ type (
 
 		// indefiniteAsyncTasks is the list of indefinite async tasks for the application.
 		indefiniteAsyncTasks sync.Map
+
+		// serviceEndpointHashBucket is the service endpoint hash bucket for the application.
+		serviceEndpointHashBucket cache.HashBucket
 	}
 )
 
