@@ -13,7 +13,7 @@ require (
 	github.com/jacobbrewer1/workerpool v0.0.4
 	github.com/prometheus/client_golang v1.21.1
 	github.com/serialx/hashring v0.0.0-20200727003509-22c0c7ab6b1b
-	github.com/spf13/viper v1.20.0
+	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	k8s.io/api v0.32.3
 	k8s.io/apimachinery v0.32.3
