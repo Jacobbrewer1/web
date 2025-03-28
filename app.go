@@ -204,6 +204,11 @@ func (a *App) startServer(name string, srv *http.Server) {
 	}()
 }
 
+// ChildContext returns a child context of the base context.
+func (a *App) ChildContext() (context.Context, context.CancelFunc) {
+	return context.WithCancel(a.baseCtx)
+}
+
 // WaitForEnd waits for the application to complete, either normally or via an interrupt signal.
 func (a *App) WaitForEnd(onEnd ...func()) {
 	<-a.baseCtx.Done()
@@ -214,6 +219,10 @@ func (a *App) WaitForEnd(onEnd ...func()) {
 }
 
 func (a *App) Shutdown() {
+	if a.baseCtxCancel != nil {
+		a.baseCtxCancel()
+	}
+
 	ctx, cancel := context.WithTimeout(a.baseCtx, 15*time.Second)
 	defer cancel()
 
