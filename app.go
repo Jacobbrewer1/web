@@ -358,7 +358,7 @@ func (a *App) startAsyncTask(name string, indefinite bool, fn AsyncTaskFunc) {
 
 		// If task is configured as indefinite and the task stops before we stop running the entire app, close the app down
 		// with an error.
-		if indefinite && !errors.Is(a.baseCtx.Err(), context.Canceled) {
+		if indefinite && !errors.Is(a.baseCtx.Err(), context.Canceled) { // nolint:revive // Traditional error handling
 			a.l.Warn("indefinite async task closed before app shutdown",
 				slog.String(logging.KeyName, name),
 			)
