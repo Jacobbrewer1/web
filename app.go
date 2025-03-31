@@ -98,6 +98,9 @@ type (
 		// natsClient is the nats client for the application.
 		natsClient *nats.Conn
 
+		// natsJetStream is the nats jetstream for the application.
+		natsJetStream jetstream.JetStream
+
 		// natStream is the nats stream for the application.
 		natsStream jetstream.Stream
 	}
@@ -383,7 +386,12 @@ func (a *App) NatsClient() *nats.Conn {
 }
 
 // NatsJetStream returns the JetStream stream for the application.
-func (a *App) NatsJetStream() jetstream.Stream {
+func (a *App) NatsJetStream() jetstream.JetStream {
+	return a.natsJetStream
+}
+
+// NatsStream returns the NATS stream for the application.
+func (a *App) NatsStream() jetstream.Stream {
 	return a.natsStream
 }
 

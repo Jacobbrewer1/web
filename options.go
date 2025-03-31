@@ -352,6 +352,7 @@ func WithNatsJetStream(streamName string, subjects []string) StartOption {
 		if err != nil {
 			return fmt.Errorf("failed to create jetstream: %w", err)
 		}
+		a.natsJetStream = js
 
 		_, err = js.CreateStream(a.baseCtx, jetstream.StreamConfig{
 			Name:      streamName,
