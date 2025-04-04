@@ -8,6 +8,7 @@ import (
 	"sync"
 )
 
+// Checker is an interface that defines a health checker.
 type Checker interface {
 	// Handler returns the handler for the check.
 	Handler() http.HandlerFunc
@@ -16,6 +17,9 @@ type Checker interface {
 	Check(ctx context.Context) *Result
 }
 
+// checker is a struct that implements the Checker interface.
+//
+// This is a group of checks that can be run in parallel.
 type checker struct {
 	baseCtx context.Context
 	cancel  context.CancelFunc

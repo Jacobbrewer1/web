@@ -48,7 +48,7 @@ func TestNewCheckerHandler_Single(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusOK, rec.Code, "Handler() should return a 200 OK status code")
-	require.Equal(t, "application/json", rec.Header().Get("Content-Type"), "Handler() should return a JSON content type")
+	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"), "Handler() should return a JSON content type")
 
 	expectedJSON := `{"status":"up","details":{"test_check":{"status":"up","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
 	require.JSONEq(t, expectedJSON, rec.Body.String(), "Handler() should return the expected JSON response")
@@ -78,7 +78,7 @@ func TestNewCheckerHandler_Multiple(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusOK, rec.Code, "Handler() should return a 200 OK status code")
-	require.Equal(t, "application/json", rec.Header().Get("Content-Type"), "Handler() should return a JSON content type")
+	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"), "Handler() should return a JSON content type")
 
 	expectedJSON := `{"status":"up","details":{"test_check":{"status":"up","timestamp":"` + now.Format(time.RFC3339Nano) + `"},"second_check":{"status":"up","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
 	require.JSONEq(t, expectedJSON, rec.Body.String(), "Handler() should return the expected JSON response")
@@ -104,7 +104,7 @@ func TestNewCheckerHandler_Single_Error(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusServiceUnavailable, rec.Code, "Handler() should return a 200 OK status code")
-	require.Equal(t, "application/json", rec.Header().Get("Content-Type"), "Handler() should return a JSON content type")
+	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"), "Handler() should return a JSON content type")
 
 	expectedJSON := `{"status":"down","details":{"test_check":{"status":"down","error":"test error","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
 	require.JSONEq(t, expectedJSON, rec.Body.String(), "Handler() should return the expected JSON response")
