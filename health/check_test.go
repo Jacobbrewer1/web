@@ -212,3 +212,25 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 	require.Equal(t, expectedState, c.state, "Fourth Check() should update the state correctly")
 	require.Equal(t, 2, statusListenerCalled, "StatusListener should be called twice")
 }
+
+func TestCheck_StatusError(t *testing.T) {
+	now := time.Now().UTC()
+	Timestamp = func() time.Time { return now }
+
+	c := NewCheck("test", func(ctx context.Context) error {
+		return NewStatusError(errors.New("test error"), StatusDegraded)
+	})
+
+	err := c.Check(context.Background())
+	require.EqualError(t, err, "test error", "Check() should return the correct error")
+
+	expectedState := &State{
+		lastCheckTime:   now,
+		lastSuccess:     time.Time{},
+		lastFail:        now,
+		contiguousFails: 1,
+		checkErr:        NewStatusError(errors.New("test error"), StatusDegraded),
+		status:          StatusDegraded,
+	}
+	require.Equal(t, expectedState, c.state, "Check() should update the state correctly")
+}
