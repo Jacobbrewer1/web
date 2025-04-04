@@ -3,7 +3,6 @@ module github.com/jacobbrewer1/web
 go 1.24
 
 require (
-	github.com/alexliesenfeld/health v0.8.0
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/gomodule/redigo v1.9.2
 	github.com/gorilla/mux v1.8.1
