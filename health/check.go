@@ -3,10 +3,7 @@ package health
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"time"
-
-	"github.com/jacobbrewer1/web/logging"
 )
 
 type CheckFunc = func(ctx context.Context) error
@@ -35,6 +32,10 @@ type Check struct {
 }
 
 // NewCheck creates a new Check
+//
+// You are able to return custom statuses by returning a StatusError from the check function. This way you can perform
+// checks that return a status other than up or down. For example, you can return a status of "degraded" if the check
+// is partially failing. This is useful for checks that are not binary in nature.
 func NewCheck(name string, checkerFunc CheckFunc, options ...CheckOption) *Check {
 	c := &Check{
 		name:    name,
@@ -50,23 +51,11 @@ func NewCheck(name string, checkerFunc CheckFunc, options ...CheckOption) *Check
 	return c
 }
 
-// NewCheckWithStandardListener creates a new Check with a standard status listener
-func NewCheckWithStandardListener(l *slog.Logger, name string, checkerFunc CheckFunc, options ...CheckOption) *Check {
-	l = logging.LoggerWithComponent(l, "health-checker")
-	c := NewCheck(name, checkerFunc, options...)
-	c.statusListener = func(ctx context.Context, name string, state State) {
-		l.Info("health check status changed",
-			slog.String(logging.KeyName, name),
-			slog.String(logging.KeyState, state.Status().String()),
-		)
-	}
-	return c
-}
-
 func (c *Check) String() string {
 	return c.name
 }
 
+// Check performs the check and updates the state of the check.
 func (c *Check) Check(ctx context.Context) error {
 	now := Timestamp()
 	c.state.lastCheckTime = now

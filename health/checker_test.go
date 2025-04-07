@@ -18,7 +18,7 @@ func TestNewChecker(t *testing.T) {
 		return nil
 	})
 
-	got := NewChecker(CheckerWithCheck(gotCheck))
+	got := NewChecker(WithCheckerCheck(gotCheck))
 
 	c, ok := got.(*checker)
 	require.True(t, ok, "NewChecker() should return a *checker")
@@ -36,7 +36,7 @@ func TestNewCheckerHandler_Single(t *testing.T) {
 		return nil
 	})
 
-	got := NewChecker(CheckerWithCheck(gotCheck))
+	got := NewChecker(WithCheckerCheck(gotCheck))
 
 	handler := got.Handler()
 	require.NotNil(t, handler, "Handler() should return a non-nil http.HandlerFunc")
@@ -66,7 +66,7 @@ func TestNewCheckerHandler_Multiple(t *testing.T) {
 		return nil
 	})
 
-	got := NewChecker(CheckerWithCheck(gotCheck), CheckerWithCheck(secondCheck))
+	got := NewChecker(WithCheckerChecks([]*Check{gotCheck, secondCheck}...))
 
 	handler := got.Handler()
 	require.NotNil(t, handler, "Handler() should return a non-nil http.HandlerFunc")
@@ -92,7 +92,7 @@ func TestNewCheckerHandler_Single_Error(t *testing.T) {
 		return errors.New("test error")
 	})
 
-	got := NewChecker(CheckerWithCheck(gotCheck))
+	got := NewChecker(WithCheckerCheck(gotCheck))
 
 	handler := got.Handler()
 	require.NotNil(t, handler, "Handler() should return a non-nil http.HandlerFunc")

@@ -180,7 +180,7 @@ func WithHealthCheck(checks ...*health.Check) StartOption {
 	return func(a *App) error {
 		checkerOpts := make([]health.CheckerOption, 0)
 		for _, check := range checks {
-			checkerOpts = append(checkerOpts, health.CheckerWithCheck(check))
+			checkerOpts = append(checkerOpts, health.WithCheckerCheck(check))
 		}
 
 		checker := health.NewChecker(checkerOpts...)
