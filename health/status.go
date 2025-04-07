@@ -2,7 +2,11 @@ package health
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"log/slog"
+
+	"github.com/jacobbrewer1/web/logging"
 )
 
 type Status int
@@ -57,4 +61,13 @@ func (s Status) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func StandardStatusListener(l *slog.Logger) StatusListenerFunc {
+	return func(ctx context.Context, name string, state State) {
+		l.Info("health check status changed",
+			slog.String(logging.KeyName, name),
+			slog.String(logging.KeyState, state.Status().String()),
+		)
+	}
 }

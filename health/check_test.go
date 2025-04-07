@@ -17,7 +17,7 @@ func TestCheck_Check_Golden(t *testing.T) {
 	c := NewCheck("test", func(ctx context.Context) error {
 		return nil
 	},
-		CheckWithStatusListener(func(ctx context.Context, name string, state State) {
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
 			statusListenerCalled = true
 			require.Equal(t, "test", name, "StatusListener should receive the correct name")
 			require.Equal(t, StatusUp, state.status, "StatusListener should receive the correct status")
@@ -47,7 +47,7 @@ func TestCheck_Check_Golden_FailCheck(t *testing.T) {
 	c := NewCheck("test", func(ctx context.Context) error {
 		return errors.New("test error")
 	},
-		CheckWithStatusListener(func(ctx context.Context, name string, state State) {
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
 			statusListenerCalled = true
 			require.Equal(t, "test", name, "StatusListener should receive the correct name")
 			require.Equal(t, StatusDown, state.status, "StatusListener should receive the correct status")
@@ -82,7 +82,7 @@ func TestCheck_Check_Golden_SuccessToFailToSuccess(t *testing.T) {
 		}
 		return nil
 	},
-		CheckWithStatusListener(func(ctx context.Context, name string, state State) {
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
 			statusListenerCalled++
 			if statusListenerCalled%2 == 0 {
 				require.Equal(t, "test", name, "StatusListener should receive the correct name")
@@ -143,8 +143,8 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 	c := NewCheck("test", func(ctx context.Context) error {
 		return errors.New("test error")
 	},
-		CheckWithMaxContiguousFails(3),
-		CheckWithStatusListener(func(ctx context.Context, name string, state State) {
+		WithCheckMaxFailures(3),
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
 			statusListenerCalled++
 			require.Equal(t, "test", name, "StatusListener should receive the correct name")
 
