@@ -33,7 +33,7 @@ type Check struct {
 
 // NewCheck creates a new Check
 //
-// You are able to return custom statuses by returning a StatusError from the check function. This was you can perform
+// You are able to return custom statuses by returning a StatusError from the check function. This way you can perform
 // checks that return a status other than up or down. For example, you can return a status of "degraded" if the check
 // is partially failing. This is useful for checks that are not binary in nature.
 func NewCheck(name string, checkerFunc CheckFunc, options ...CheckOption) *Check {
