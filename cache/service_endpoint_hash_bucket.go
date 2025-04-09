@@ -17,7 +17,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-// ServiceEndpointHashBucket represents a mechanism which determine whether the current application instance should process
+// ServiceEndpointHashBucket represents a mechanism which determines whether the current application instance should process
 // a particular key. The bucket size is determined by the number of active endpoints in the supplied Kubernetes service.
 type ServiceEndpointHashBucket struct {
 	mut               sync.Mutex
