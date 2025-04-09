@@ -46,9 +46,7 @@ func Test_Lifecycle(t *testing.T) {
 
 	l := slog.New(slog.NewTextHandler(io.Discard, nil))
 	k := fake.NewClientset(ep)
-	sbGot := NewServiceEndpointHashBucket(l, k, "my-svc", "my-ns", "")
-	sb, ok := sbGot.(*serviceEndpointHashBucket)
-	require.True(t, ok)
+	sb := NewServiceEndpointHashBucket(l, k, "my-svc", "my-ns", "")
 	require.NoError(t, sb.Start(ctx))
 
 	// Check that we can receive an endpoint update after starting.
@@ -98,7 +96,7 @@ func Test_Lifecycle(t *testing.T) {
 func Test_onEndpointUpdate(t *testing.T) {
 	t.Parallel()
 
-	sb := &serviceEndpointHashBucket{
+	sb := &ServiceEndpointHashBucket{
 		l: slog.New(slog.NewTextHandler(io.Discard, nil)),
 		hr: hashring.New([]string{
 			"a",
