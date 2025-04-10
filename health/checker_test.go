@@ -22,9 +22,9 @@ func TestNewChecker(t *testing.T) {
 
 	c, ok := got.(*checker)
 	require.True(t, ok, "NewChecker() should return a *checker")
-	require.NotNil(t, c, "NewChecker() should return a non-nil Checker")
-	require.Equal(t, http.StatusOK, c.httpStatusCodeUp, "NewChecker() should set the default HTTP status code up")
-	require.Equal(t, http.StatusServiceUnavailable, c.httpStatusCodeDown, "NewChecker() should set the default HTTP status code down")
+	require.NotNil(t, c)
+	require.Equal(t, http.StatusOK, c.httpStatusCodeUp)
+	require.Equal(t, http.StatusServiceUnavailable, c.httpStatusCodeDown)
 	require.NotNil(t, c.baseCtx, "NewChecker() should set the base context")
 }
 
@@ -39,7 +39,7 @@ func TestNewCheckerHandler_Single(t *testing.T) {
 	got := NewChecker(WithCheckerCheck(gotCheck))
 
 	handler := got.Handler()
-	require.NotNil(t, handler, "Handler() should return a non-nil http.HandlerFunc")
+	require.NotNil(t, handler)
 
 	// Call the handler and check the response
 	req := httptest.NewRequest("GET", "/", http.NoBody)
@@ -47,11 +47,11 @@ func TestNewCheckerHandler_Single(t *testing.T) {
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
-	require.Equal(t, http.StatusOK, rec.Code, "Handler() should return a 200 OK status code")
-	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"), "Handler() should return a JSON content type")
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"))
 
 	expectedJSON := `{"status":"up","details":{"test_check":{"status":"up","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
-	require.JSONEq(t, expectedJSON, rec.Body.String(), "Handler() should return the expected JSON response")
+	require.JSONEq(t, expectedJSON, rec.Body.String())
 }
 
 func TestNewCheckerHandler_Single_StatusError(t *testing.T) {
@@ -65,7 +65,7 @@ func TestNewCheckerHandler_Single_StatusError(t *testing.T) {
 	got := NewChecker(WithCheckerCheck(gotCheck))
 
 	handler := got.Handler()
-	require.NotNil(t, handler, "Handler() should return a non-nil http.HandlerFunc")
+	require.NotNil(t, handler)
 
 	// Call the handler and check the response
 	req := httptest.NewRequest("GET", "/", http.NoBody)
@@ -74,10 +74,10 @@ func TestNewCheckerHandler_Single_StatusError(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusServiceUnavailable, rec.Code)
-	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"), "Handler() should return a JSON content type")
+	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"))
 
 	expectedJSON := `{"status":"degraded","details":{"test_check":{"status":"degraded","error":"test error","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
-	require.JSONEq(t, expectedJSON, rec.Body.String(), "Handler() should return the expected JSON response")
+	require.JSONEq(t, expectedJSON, rec.Body.String())
 }
 
 func TestNewCheckerHandler_Single_StatusError_InvalidStatus(t *testing.T) {
@@ -91,7 +91,7 @@ func TestNewCheckerHandler_Single_StatusError_InvalidStatus(t *testing.T) {
 	got := NewChecker(WithCheckerCheck(gotCheck))
 
 	handler := got.Handler()
-	require.NotNil(t, handler, "Handler() should return a non-nil http.HandlerFunc")
+	require.NotNil(t, handler)
 
 	// Call the handler and check the response
 	req := httptest.NewRequest("GET", "/", http.NoBody)
@@ -99,11 +99,11 @@ func TestNewCheckerHandler_Single_StatusError_InvalidStatus(t *testing.T) {
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
-	require.Equal(t, http.StatusServiceUnavailable, rec.Code, "Handler() should return a 200 OK status code")
-	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"), "Handler() should return a JSON content type")
+	require.Equal(t, http.StatusServiceUnavailable, rec.Code)
+	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"))
 
 	expectedJSON := `{"status":"unknown","details":{"test_check":{"status":"unknown","error":"test error","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
-	require.JSONEq(t, expectedJSON, rec.Body.String(), "Handler() should return the expected JSON response")
+	require.JSONEq(t, expectedJSON, rec.Body.String())
 }
 
 func TestNewCheckerHandler_Multiple(t *testing.T) {
@@ -121,7 +121,7 @@ func TestNewCheckerHandler_Multiple(t *testing.T) {
 	got := NewChecker(WithCheckerChecks([]*Check{gotCheck, secondCheck}...))
 
 	handler := got.Handler()
-	require.NotNil(t, handler, "Handler() should return a non-nil http.HandlerFunc")
+	require.NotNil(t, handler)
 
 	// Call the handler and check the response
 	req := httptest.NewRequest("GET", "/", http.NoBody)
@@ -129,11 +129,11 @@ func TestNewCheckerHandler_Multiple(t *testing.T) {
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
-	require.Equal(t, http.StatusOK, rec.Code, "Handler() should return a 200 OK status code")
-	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"), "Handler() should return a JSON content type")
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"))
 
 	expectedJSON := `{"status":"up","details":{"test_check":{"status":"up","timestamp":"` + now.Format(time.RFC3339Nano) + `"},"second_check":{"status":"up","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
-	require.JSONEq(t, expectedJSON, rec.Body.String(), "Handler() should return the expected JSON response")
+	require.JSONEq(t, expectedJSON, rec.Body.String())
 }
 
 func TestNewCheckerHandler_Single_Error(t *testing.T) {
@@ -147,7 +147,7 @@ func TestNewCheckerHandler_Single_Error(t *testing.T) {
 	got := NewChecker(WithCheckerCheck(gotCheck))
 
 	handler := got.Handler()
-	require.NotNil(t, handler, "Handler() should return a non-nil http.HandlerFunc")
+	require.NotNil(t, handler)
 
 	// Call the handler and check the response
 	req := httptest.NewRequest("GET", "/", http.NoBody)
@@ -155,11 +155,11 @@ func TestNewCheckerHandler_Single_Error(t *testing.T) {
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
-	require.Equal(t, http.StatusServiceUnavailable, rec.Code, "Handler() should return a 200 OK status code")
-	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"), "Handler() should return a JSON content type")
+	require.Equal(t, http.StatusServiceUnavailable, rec.Code)
+	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"))
 
 	expectedJSON := `{"status":"down","details":{"test_check":{"status":"down","error":"test error","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
-	require.JSONEq(t, expectedJSON, rec.Body.String(), "Handler() should return the expected JSON response")
+	require.JSONEq(t, expectedJSON, rec.Body.String())
 }
 
 func TestNewCheckerHandler_NoParentContext(t *testing.T) {
@@ -173,16 +173,16 @@ func TestNewCheckerHandler_NoParentContext(t *testing.T) {
 	got := NewChecker(WithCheckerCheck(gotCheck))
 
 	handler := got.Handler()
-	require.NotNil(t, handler, "Handler() should return a non-nil http.HandlerFunc")
+	require.NotNil(t, handler)
 
 	res := got.Check(nil) // nolint:staticcheck // This is testing that the function works with a nil context
-	require.Equal(t, StatusUp, res.Status, "Check() should return a status of up when no parent context is provided")
+	require.Equal(t, StatusUp, res.Status)
 
 	require.NotNil(t, res)
 
 	require.NotNil(t, res.Details)
-	require.Len(t, res.Details, 1, "Check() should return one detail")
-	require.Equal(t, StatusUp, res.Details["test_check"].Status, "Check() should return a status of up for the test_check detail")
+	require.Len(t, res.Details, 1)
+	require.Equal(t, StatusUp, res.Details["test_check"].Status)
 }
 
 func TestChecker_HttpCodeFromStatus(t *testing.T) {
@@ -227,9 +227,9 @@ func TestChecker_HttpCodeFromStatus(t *testing.T) {
 			got := NewChecker()
 			c, ok := got.(*checker)
 			require.True(t, ok, "NewChecker() should return a *checker")
-			require.NotNil(t, c, "NewChecker() should return a non-nil Checker")
+			require.NotNil(t, c)
 
-			require.Equal(t, tt.expectedStatus, c.httpCodeFromStatus(tt.status), "httpCodeFromStatus() should return the expected status code")
+			require.Equal(t, tt.expectedStatus, c.httpCodeFromStatus(tt.status))
 		})
 	}
 }

@@ -38,7 +38,7 @@ func TestResult_SetStatus(t *testing.T) {
 
 			r := newResult()
 			r.SetStatus(tt.status)
-			require.Equal(t, tt.expect, r.Status, "SetStatus() should set the status correctly")
+			require.Equal(t, tt.expect, r.Status)
 		})
 	}
 }
@@ -97,7 +97,7 @@ func TestResult_SetStatusOverride(t *testing.T) {
 			r := newResult()
 			r.SetStatus(tt.statusOne)
 			r.SetStatus(tt.statusTwo)
-			require.Equal(t, tt.expect, r.Status, "SetStatus() should set the status correctly")
+			require.Equal(t, tt.expect, r.Status)
 		})
 	}
 }
@@ -113,5 +113,5 @@ func TestResult_AddDetail_NilMap(t *testing.T) {
 	})
 
 	require.NotNil(t, res.Details, "Details map should be initialized")
-	require.Len(t, res.Details, 1, "Details map should contain one entry")
+	require.Len(t, res.Details, 1)
 }

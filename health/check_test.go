@@ -19,13 +19,13 @@ func TestCheck_Check_Golden(t *testing.T) {
 	},
 		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
 			statusListenerCalled = true
-			require.Equal(t, "test", name, "StatusListener should receive the correct name")
-			require.Equal(t, StatusUp, state.status, "StatusListener should receive the correct status")
+			require.Equal(t, "test", name)
+			require.Equal(t, StatusUp, state.status)
 		}),
 	)
 
 	err := c.Check(context.Background())
-	require.NoError(t, err, "Check() should not return an error")
+	require.NoError(t, err)
 
 	expectedState := &State{
 		lastCheckTime:   now,
@@ -35,8 +35,8 @@ func TestCheck_Check_Golden(t *testing.T) {
 		checkErr:        nil,
 		status:          StatusUp,
 	}
-	require.Equal(t, expectedState, c.state, "Check() should update the state correctly")
-	require.True(t, statusListenerCalled, "StatusListener should be called")
+	require.Equal(t, expectedState, c.state)
+	require.True(t, statusListenerCalled)
 }
 
 func TestCheck_Check_Golden_FailCheck(t *testing.T) {
@@ -49,13 +49,13 @@ func TestCheck_Check_Golden_FailCheck(t *testing.T) {
 	},
 		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
 			statusListenerCalled = true
-			require.Equal(t, "test", name, "StatusListener should receive the correct name")
-			require.Equal(t, StatusDown, state.status, "StatusListener should receive the correct status")
+			require.Equal(t, "test", name)
+			require.Equal(t, StatusDown, state.status)
 		}),
 	)
 
 	err := c.Check(context.Background())
-	require.EqualError(t, err, "test error", "Check() should return the correct error")
+	require.EqualError(t, err, "test error")
 
 	expectedState := &State{
 		lastCheckTime:   now,
@@ -65,8 +65,8 @@ func TestCheck_Check_Golden_FailCheck(t *testing.T) {
 		checkErr:        errors.New("test error"),
 		status:          StatusDown,
 	}
-	require.Equal(t, expectedState, c.state, "Check() should update the state correctly")
-	require.True(t, statusListenerCalled, "StatusListener should be called")
+	require.Equal(t, expectedState, c.state)
+	require.True(t, statusListenerCalled)
 }
 
 func TestCheck_Check_Golden_SuccessToFailToSuccess(t *testing.T) {
@@ -85,11 +85,11 @@ func TestCheck_Check_Golden_SuccessToFailToSuccess(t *testing.T) {
 		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
 			statusListenerCalled++
 			if statusListenerCalled%2 == 0 {
-				require.Equal(t, "test", name, "StatusListener should receive the correct name")
-				require.Equal(t, StatusDown, state.status, "StatusListener should receive the correct status")
+				require.Equal(t, "test", name)
+				require.Equal(t, StatusDown, state.status)
 			} else {
-				require.Equal(t, "test", name, "StatusListener should receive the correct name")
-				require.Equal(t, StatusUp, state.status, "StatusListener should receive the correct status")
+				require.Equal(t, "test", name)
+				require.Equal(t, StatusUp, state.status)
 			}
 		}),
 	)
@@ -131,8 +131,8 @@ func TestCheck_Check_Golden_SuccessToFailToSuccess(t *testing.T) {
 		checkErr:        nil,
 		status:          StatusUp,
 	}
-	require.Equal(t, expectedState, c.state, "Check() should update the state correctly")
-	require.Equal(t, 3, statusListenerCalled, "StatusListener should be called three times")
+	require.Equal(t, expectedState, c.state)
+	require.Equal(t, 3, statusListenerCalled)
 }
 
 func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
@@ -146,12 +146,12 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 		WithCheckMaxFailures(3),
 		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
 			statusListenerCalled++
-			require.Equal(t, "test", name, "StatusListener should receive the correct name")
+			require.Equal(t, "test", name)
 
 			if state.contiguousFails < 3 {
-				require.Equal(t, StatusUp, state.status, "StatusListener should receive the correct status")
+				require.Equal(t, StatusUp, state.status)
 			} else {
-				require.Equal(t, StatusDown, state.status, "StatusListener should receive the correct status")
+				require.Equal(t, StatusDown, state.status)
 			}
 		}),
 	)
@@ -168,7 +168,7 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 		status:          StatusUp,
 	}
 	require.Equal(t, expectedState, c.state, "First Check() should update the state correctly")
-	require.Equal(t, 1, statusListenerCalled, "StatusListener should be called once")
+	require.Equal(t, 1, statusListenerCalled)
 
 	err = c.Check(context.Background())
 	require.EqualError(t, err, "test error", "Second Check() should return the correct error")
@@ -182,7 +182,7 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 		status:          StatusUp,
 	}
 	require.Equal(t, expectedState, c.state, "Second Check() should update the state correctly")
-	require.Equal(t, 1, statusListenerCalled, "StatusListener should be called once")
+	require.Equal(t, 1, statusListenerCalled)
 
 	err = c.Check(context.Background())
 	require.EqualError(t, err, "test error", "Third Check() should return the correct error")
@@ -196,7 +196,7 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 		status:          StatusDown,
 	}
 	require.Equal(t, expectedState, c.state, "Third Check() should update the state correctly")
-	require.Equal(t, 2, statusListenerCalled, "StatusListener should be called twice")
+	require.Equal(t, 2, statusListenerCalled)
 
 	err = c.Check(context.Background())
 	require.EqualError(t, err, "test error", "Fourth Check() should return the correct error")
@@ -210,7 +210,7 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 		status:          StatusDown,
 	}
 	require.Equal(t, expectedState, c.state, "Fourth Check() should update the state correctly")
-	require.Equal(t, 2, statusListenerCalled, "StatusListener should be called twice")
+	require.Equal(t, 2, statusListenerCalled)
 }
 
 func TestCheck_StatusError(t *testing.T) {
@@ -222,7 +222,7 @@ func TestCheck_StatusError(t *testing.T) {
 	})
 
 	err := c.Check(context.Background())
-	require.EqualError(t, err, "test error", "Check() should return the correct error")
+	require.EqualError(t, err, "test error")
 
 	expectedState := &State{
 		lastCheckTime:   now,
@@ -232,7 +232,7 @@ func TestCheck_StatusError(t *testing.T) {
 		checkErr:        NewStatusError(errors.New("test error"), StatusDegraded),
 		status:          StatusDegraded,
 	}
-	require.Equal(t, expectedState, c.state, "Check() should update the state correctly")
+	require.Equal(t, expectedState, c.state)
 }
 
 func TestCheck_NoTimeout(t *testing.T) {
@@ -245,14 +245,14 @@ func TestCheck_NoTimeout(t *testing.T) {
 	},
 		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
 			statusListenerCalled = true
-			require.Equal(t, "test", name, "StatusListener should receive the correct name")
-			require.Equal(t, StatusUp, state.status, "StatusListener should receive the correct status")
+			require.Equal(t, "test", name)
+			require.Equal(t, StatusUp, state.status)
 		}),
 		WithNoCheckTimeout(),
 	)
 
 	err := c.Check(context.Background())
-	require.NoError(t, err, "Check() should not return an error")
+	require.NoError(t, err)
 
 	expectedState := &State{
 		lastCheckTime:   now,
@@ -262,8 +262,8 @@ func TestCheck_NoTimeout(t *testing.T) {
 		checkErr:        nil,
 		status:          StatusUp,
 	}
-	require.Equal(t, expectedState, c.state, "Check() should update the state correctly")
-	require.True(t, statusListenerCalled, "StatusListener should be called")
+	require.Equal(t, expectedState, c.state)
+	require.True(t, statusListenerCalled)
 }
 
 func TestCheck_NoParentContext(t *testing.T) {
@@ -276,13 +276,13 @@ func TestCheck_NoParentContext(t *testing.T) {
 	},
 		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
 			statusListenerCalled = true
-			require.Equal(t, "test", name, "StatusListener should receive the correct name")
-			require.Equal(t, StatusUp, state.status, "StatusListener should receive the correct status")
+			require.Equal(t, "test", name)
+			require.Equal(t, StatusUp, state.status)
 		}),
 	)
 
 	err := c.Check(nil) // nolint:staticcheck // This is testing that the function works with a nil context
-	require.NoError(t, err, "Check() should not return an error")
+	require.NoError(t, err)
 
 	expectedState := &State{
 		lastCheckTime:   now,
@@ -292,6 +292,6 @@ func TestCheck_NoParentContext(t *testing.T) {
 		checkErr:        nil,
 		status:          StatusUp,
 	}
-	require.Equal(t, expectedState, c.state, "Check() should update the state correctly")
-	require.True(t, statusListenerCalled, "StatusListener should be called")
+	require.Equal(t, expectedState, c.state)
+	require.True(t, statusListenerCalled)
 }
