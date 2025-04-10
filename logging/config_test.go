@@ -66,6 +66,15 @@ func TestNewLoggingConfig(t *testing.T) {
 				Level: slog.LevelError,
 			},
 		},
+		{
+			name: "invalid",
+			env: map[string]string{
+				"LOG_LEVEL": "invalid",
+			},
+			want: &loggingConfig{
+				Level: slog.LevelDebug,
+			},
+		},
 	}
 
 	for _, tt := range tests {
