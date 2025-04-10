@@ -73,7 +73,7 @@ func TestNewCheckerHandler_Single_StatusError(t *testing.T) {
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
-	require.Equal(t, http.StatusServiceUnavailable, rec.Code, "Handler() should return a 200 OK status code")
+	require.Equal(t, http.StatusServiceUnavailable, rec.Code)
 	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"), "Handler() should return a JSON content type")
 
 	expectedJSON := `{"status":"degraded","details":{"test_check":{"status":"degraded","error":"test error","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
@@ -175,7 +175,7 @@ func TestNewCheckerHandler_NoParentContext(t *testing.T) {
 	handler := got.Handler()
 	require.NotNil(t, handler, "Handler() should return a non-nil http.HandlerFunc")
 
-	res := got.Check(nil)
+	res := got.Check(nil) // nolint:staticcheck // This is testing that the function works with a nil context
 	require.Equal(t, StatusUp, res.Status, "Check() should return a status of up when no parent context is provided")
 
 	require.NotNil(t, res)

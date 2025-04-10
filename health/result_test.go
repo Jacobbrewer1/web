@@ -113,5 +113,5 @@ func TestResult_AddDetail_NilMap(t *testing.T) {
 	})
 
 	require.NotNil(t, res.Details, "Details map should be initialized")
-	require.Equal(t, 1, len(res.Details), "Details map should contain one entry")
+	require.Len(t, res.Details, 1, "Details map should contain one entry")
 }

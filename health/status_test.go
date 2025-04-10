@@ -51,10 +51,10 @@ func TestStatus_MarshalJSON(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			got, err := tt.status.MarshalJSON()
-			require.Equal(t, tt.wantErr, err, "MarshalJSON() should not return an error")
+			require.Equal(t, tt.wantErr, err)
 
 			if tt.wantErr == nil {
-				require.JSONEq(t, tt.want, string(got), "MarshalJSON() should return the correct JSON")
+				require.JSONEq(t, tt.want, string(got))
 			}
 		})
 	}

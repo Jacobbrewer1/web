@@ -281,7 +281,7 @@ func TestCheck_NoParentContext(t *testing.T) {
 		}),
 	)
 
-	err := c.Check(nil)
+	err := c.Check(nil) // nolint:staticcheck // This is testing that the function works with a nil context
 	require.NoError(t, err, "Check() should not return an error")
 
 	expectedState := &State{
