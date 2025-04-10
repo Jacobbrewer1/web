@@ -330,6 +330,7 @@ func WithNatsJetStream(streamName string, subjects []string) StartOption {
 			Subjects:  subjects,
 			Storage:   jetstream.FileStorage,
 			Retention: jetstream.LimitsPolicy,
+			MaxAge:    3 * (24 * time.Hour),
 		})
 		if err != nil && !errors.Is(err, jetstream.ErrStreamNameAlreadyInUse) {
 			return fmt.Errorf("failed to create stream: %w", err)
