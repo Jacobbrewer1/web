@@ -6,8 +6,10 @@ import (
 	"time"
 )
 
+// CheckFunc is a function that performs the check.
 type CheckFunc = func(ctx context.Context) error
 
+// Check is a struct that represents a health check.
 type Check struct {
 	// name is the name of the check.
 	name string
@@ -51,6 +53,7 @@ func NewCheck(name string, checkerFunc CheckFunc, options ...CheckOption) *Check
 	return c
 }
 
+// String returns the name of the check.
 func (c *Check) String() string {
 	return c.name
 }
@@ -106,12 +109,12 @@ func (c *Check) Check(ctx context.Context) error {
 
 		c.state.checkErr = err
 		return err
-	} else {
-		newStatus = StatusUp
-		c.state.lastSuccess = now
-		c.state.contiguousFails = 0
-		c.state.checkErr = nil
 	}
+
+	newStatus = StatusUp
+	c.state.lastSuccess = now
+	c.state.contiguousFails = 0
+	c.state.checkErr = nil
 
 	return nil
 }

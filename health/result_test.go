@@ -36,7 +36,7 @@ func TestResult_SetStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			r := newResult()
+			r := NewResult()
 			r.SetStatus(tt.status)
 			require.Equal(t, tt.expect, r.Status)
 		})
@@ -94,7 +94,7 @@ func TestResult_SetStatusOverride(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			r := newResult()
+			r := NewResult()
 			r.SetStatus(tt.statusOne)
 			r.SetStatus(tt.statusTwo)
 			require.Equal(t, tt.expect, r.Status)

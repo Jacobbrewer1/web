@@ -5,8 +5,10 @@ import (
 	"time"
 )
 
+// CheckOption is a function that modifies the check configuration.
 type CheckOption = func(*Check)
 
+// StatusListenerFunc is a function that is called when the status of the check changes.
 type StatusListenerFunc = func(ctx context.Context, name string, state State)
 
 // WithCheckTimeout sets the timeout for the check.

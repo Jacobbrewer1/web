@@ -81,14 +81,14 @@ func (c *checker) Check(ctx context.Context) *Result {
 		ctx = context.Background()
 	}
 
-	result := newResult()
+	result := NewResult()
 
 	wg := new(sync.WaitGroup)
 	for _, check := range c.checks {
 		wg.Add(1)
 		go func(check *Check, result *Result) {
 			defer wg.Done()
-			checkResult := newResult()
+			checkResult := NewResult()
 
 			checkStatus := StatusUp
 			if err := check.Check(ctx); err != nil {
