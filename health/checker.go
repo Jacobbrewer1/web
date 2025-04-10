@@ -20,17 +20,19 @@ type Checker struct {
 }
 
 // NewChecker creates a new Checker.
-func NewChecker(opts ...CheckerOption) *Checker {
+func NewChecker(opts ...CheckerOption) (*Checker, error) {
 	c := &Checker{
 		httpStatusCodeUp:   http.StatusOK,
 		httpStatusCodeDown: http.StatusServiceUnavailable,
 	}
 
 	for _, opt := range opts {
-		opt(c)
+		if err := opt(c); err != nil {
+			return nil, fmt.Errorf("failed to apply checker option: %w", err)
+		}
 	}
 
-	return c
+	return c, nil
 }
 
 func (c *Checker) httpCodeFromStatus(status Status) int {
