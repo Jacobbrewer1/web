@@ -18,14 +18,12 @@ func TestNewChecker(t *testing.T) {
 		return nil
 	})
 
-	got := NewChecker(WithCheckerCheck(gotCheck))
+	c, err := NewChecker(WithCheckerCheck(gotCheck))
+	require.NoError(t, err)
 
-	c, ok := got.(*checker)
-	require.True(t, ok, "NewChecker() should return a *checker")
 	require.NotNil(t, c)
 	require.Equal(t, http.StatusOK, c.httpStatusCodeUp)
 	require.Equal(t, http.StatusServiceUnavailable, c.httpStatusCodeDown)
-	require.NotNil(t, c.baseCtx, "NewChecker() should set the base context")
 }
 
 func TestNewCheckerHandler_Single(t *testing.T) {
@@ -36,7 +34,8 @@ func TestNewCheckerHandler_Single(t *testing.T) {
 		return nil
 	})
 
-	got := NewChecker(WithCheckerCheck(gotCheck))
+	got, err := NewChecker(WithCheckerCheck(gotCheck))
+	require.NoError(t, err)
 
 	handler := got.Handler()
 	require.NotNil(t, handler)
@@ -62,7 +61,8 @@ func TestNewCheckerHandler_Single_StatusError(t *testing.T) {
 		return NewStatusError(errors.New("test error"), StatusDegraded)
 	})
 
-	got := NewChecker(WithCheckerCheck(gotCheck))
+	got, err := NewChecker(WithCheckerCheck(gotCheck))
+	require.NoError(t, err)
 
 	handler := got.Handler()
 	require.NotNil(t, handler)
@@ -88,7 +88,8 @@ func TestNewCheckerHandler_Single_StatusError_InvalidStatus(t *testing.T) {
 		return NewStatusError(errors.New("test error"), 123)
 	})
 
-	got := NewChecker(WithCheckerCheck(gotCheck))
+	got, err := NewChecker(WithCheckerCheck(gotCheck))
+	require.NoError(t, err)
 
 	handler := got.Handler()
 	require.NotNil(t, handler)
@@ -118,7 +119,8 @@ func TestNewCheckerHandler_Multiple(t *testing.T) {
 		return nil
 	})
 
-	got := NewChecker(WithCheckerChecks([]*Check{gotCheck, secondCheck}...))
+	got, err := NewChecker(WithCheckerChecks([]*Check{gotCheck, secondCheck}...))
+	require.NoError(t, err)
 
 	handler := got.Handler()
 	require.NotNil(t, handler)
@@ -144,7 +146,8 @@ func TestNewCheckerHandler_Single_Error(t *testing.T) {
 		return errors.New("test error")
 	})
 
-	got := NewChecker(WithCheckerCheck(gotCheck))
+	got, err := NewChecker(WithCheckerCheck(gotCheck))
+	require.NoError(t, err)
 
 	handler := got.Handler()
 	require.NotNil(t, handler)
@@ -170,7 +173,8 @@ func TestNewCheckerHandler_NoParentContext(t *testing.T) {
 		return nil
 	})
 
-	got := NewChecker(WithCheckerCheck(gotCheck))
+	got, err := NewChecker(WithCheckerCheck(gotCheck))
+	require.NoError(t, err)
 
 	handler := got.Handler()
 	require.NotNil(t, handler)
@@ -224,12 +228,78 @@ func TestChecker_HttpCodeFromStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := NewChecker()
-			c, ok := got.(*checker)
-			require.True(t, ok, "NewChecker() should return a *checker")
+			c, err := NewChecker()
+			require.NoError(t, err)
 			require.NotNil(t, c)
-
 			require.Equal(t, tt.expectedStatus, c.httpCodeFromStatus(tt.status))
 		})
 	}
+}
+
+func TestChecker_AddCheck(t *testing.T) {
+	t.Parallel()
+
+	c, err := NewChecker()
+	require.NoError(t, err)
+	require.NotNil(t, c)
+
+	check := NewCheck("test_check", func(_ context.Context) error {
+		return nil
+	})
+
+	err = c.AddCheck(check)
+	require.NoError(t, err)
+
+	// Check if the check was added
+	c.checks.Range(func(key, value any) bool {
+		require.Equal(t, "test_check", key)
+		return false
+	})
+}
+
+func TestChecker_AddTest_Invalid_Nil(t *testing.T) {
+	t.Parallel()
+
+	c, err := NewChecker()
+	require.NoError(t, err)
+	require.NotNil(t, c)
+
+	err = c.AddCheck(nil)
+	require.Error(t, err)
+	require.Equal(t, "check is nil", err.Error())
+}
+
+func TestChecker_AddTest_Invalid_NoName(t *testing.T) {
+	t.Parallel()
+
+	c, err := NewChecker()
+	require.NoError(t, err)
+	require.NotNil(t, c)
+
+	check := NewCheck("", func(_ context.Context) error {
+		return nil
+	})
+
+	err = c.AddCheck(check)
+	require.Error(t, err)
+	require.Equal(t, "check name is empty", err.Error())
+}
+
+func TestChecker_AddTest_Invalid_AlreadyExists(t *testing.T) {
+	t.Parallel()
+
+	c, err := NewChecker()
+	require.NoError(t, err)
+	require.NotNil(t, c)
+
+	check := NewCheck("test_check", func(_ context.Context) error {
+		return nil
+	})
+
+	err = c.AddCheck(check)
+	require.NoError(t, err)
+
+	err = c.AddCheck(check)
+	require.Error(t, err)
+	require.Equal(t, "check already exists with the same key: test_check", err.Error())
 }
