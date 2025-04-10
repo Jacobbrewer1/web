@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 
 	"github.com/jacobbrewer1/web/logging"
@@ -56,6 +57,10 @@ func (s Status) String() string {
 }
 
 func (s Status) MarshalJSON() ([]byte, error) {
+	if !s.IsValid() {
+		return nil, fmt.Errorf("%s is not a valid status", s)
+	}
+
 	buf := bytes.NewBuffer(nil)
 	if err := json.NewEncoder(buf).Encode(s.String()); err != nil {
 		return nil, err

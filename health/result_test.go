@@ -1,6 +1,7 @@
 package health
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -99,4 +100,18 @@ func TestResult_SetStatusOverride(t *testing.T) {
 			require.Equal(t, tt.expect, r.Status, "SetStatus() should set the status correctly")
 		})
 	}
+}
+
+func TestResult_AddDetail_NilMap(t *testing.T) {
+	t.Parallel()
+
+	res := new(Result)
+	res.mtx = new(sync.RWMutex)
+
+	require.NotPanics(t, func() {
+		res.addDetail("test", &Result{Status: StatusUp})
+	})
+
+	require.NotNil(t, res.Details, "Details map should be initialized")
+	require.Equal(t, 1, len(res.Details), "Details map should contain one entry")
 }

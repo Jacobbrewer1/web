@@ -11,7 +11,7 @@ import (
 
 func TestCheck_Check_Golden(t *testing.T) {
 	now := time.Now().UTC()
-	Timestamp = func() time.Time { return now }
+	timestamp = func() time.Time { return now }
 
 	statusListenerCalled := false
 	c := NewCheck("test", func(ctx context.Context) error {
@@ -41,7 +41,7 @@ func TestCheck_Check_Golden(t *testing.T) {
 
 func TestCheck_Check_Golden_FailCheck(t *testing.T) {
 	now := time.Now().UTC()
-	Timestamp = func() time.Time { return now }
+	timestamp = func() time.Time { return now }
 
 	statusListenerCalled := false
 	c := NewCheck("test", func(ctx context.Context) error {
@@ -71,7 +71,7 @@ func TestCheck_Check_Golden_FailCheck(t *testing.T) {
 
 func TestCheck_Check_Golden_SuccessToFailToSuccess(t *testing.T) {
 	now := time.Now().UTC()
-	Timestamp = func() time.Time { return now }
+	timestamp = func() time.Time { return now }
 
 	statusListenerCalled := 0
 	callNumber := 0
@@ -137,7 +137,7 @@ func TestCheck_Check_Golden_SuccessToFailToSuccess(t *testing.T) {
 
 func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 	now := time.Now().UTC()
-	Timestamp = func() time.Time { return now }
+	timestamp = func() time.Time { return now }
 
 	statusListenerCalled := 0
 	c := NewCheck("test", func(ctx context.Context) error {
@@ -215,7 +215,7 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 
 func TestCheck_StatusError(t *testing.T) {
 	now := time.Now().UTC()
-	Timestamp = func() time.Time { return now }
+	timestamp = func() time.Time { return now }
 
 	c := NewCheck("test", func(ctx context.Context) error {
 		return NewStatusError(errors.New("test error"), StatusDegraded)
@@ -233,4 +233,65 @@ func TestCheck_StatusError(t *testing.T) {
 		status:          StatusDegraded,
 	}
 	require.Equal(t, expectedState, c.state, "Check() should update the state correctly")
+}
+
+func TestCheck_NoTimeout(t *testing.T) {
+	now := time.Now().UTC()
+	timestamp = func() time.Time { return now }
+
+	statusListenerCalled := false
+	c := NewCheck("test", func(ctx context.Context) error {
+		return nil
+	},
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
+			statusListenerCalled = true
+			require.Equal(t, "test", name, "StatusListener should receive the correct name")
+			require.Equal(t, StatusUp, state.status, "StatusListener should receive the correct status")
+		}),
+		WithNoCheckTimeout(),
+	)
+
+	err := c.Check(context.Background())
+	require.NoError(t, err, "Check() should not return an error")
+
+	expectedState := &State{
+		lastCheckTime:   now,
+		lastSuccess:     now,
+		lastFail:        time.Time{},
+		contiguousFails: 0,
+		checkErr:        nil,
+		status:          StatusUp,
+	}
+	require.Equal(t, expectedState, c.state, "Check() should update the state correctly")
+	require.True(t, statusListenerCalled, "StatusListener should be called")
+}
+
+func TestCheck_NoParentContext(t *testing.T) {
+	now := time.Now().UTC()
+	timestamp = func() time.Time { return now }
+
+	statusListenerCalled := false
+	c := NewCheck("test", func(ctx context.Context) error {
+		return nil
+	},
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
+			statusListenerCalled = true
+			require.Equal(t, "test", name, "StatusListener should receive the correct name")
+			require.Equal(t, StatusUp, state.status, "StatusListener should receive the correct status")
+		}),
+	)
+
+	err := c.Check(nil)
+	require.NoError(t, err, "Check() should not return an error")
+
+	expectedState := &State{
+		lastCheckTime:   now,
+		lastSuccess:     now,
+		lastFail:        time.Time{},
+		contiguousFails: 0,
+		checkErr:        nil,
+		status:          StatusUp,
+	}
+	require.Equal(t, expectedState, c.state, "Check() should update the state correctly")
+	require.True(t, statusListenerCalled, "StatusListener should be called")
 }

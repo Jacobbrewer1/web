@@ -57,7 +57,11 @@ func (c *Check) String() string {
 
 // Check performs the check and updates the state of the check.
 func (c *Check) Check(ctx context.Context) error {
-	now := Timestamp()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	now := timestamp()
 	c.state.lastCheckTime = now
 
 	var (
@@ -90,6 +94,10 @@ func (c *Check) Check(ctx context.Context) error {
 
 		statusErr := new(StatusError)
 		if errors.As(err, &statusErr) {
+			if !statusErr.Status.IsValid() {
+				statusErr.Status = StatusUnknown
+			}
+
 			newStatus = statusErr.Status
 		}
 

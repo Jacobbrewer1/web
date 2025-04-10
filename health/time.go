@@ -2,6 +2,6 @@ package health
 
 import "time"
 
-var Timestamp = func() time.Time {
+var timestamp = func() time.Time {
 	return time.Now().UTC()
 }
