@@ -1,36 +1,17 @@
 package health
 
-import (
-	"context"
-)
-
-type CheckerOption func(*checker)
-
-// WithCheckerBaseContext sets the base context for the checker.
-func WithCheckerBaseContext(baseCtx context.Context) CheckerOption {
-	return func(c *checker) {
-		ctx, cancel := context.WithCancel(baseCtx)
-		c.baseCtx = ctx
-		c.cancel = cancel
-	}
-}
+type CheckerOption func(*Checker)
 
 // WithCheckerCheck adds a single check to the checker.
 func WithCheckerCheck(check *Check) CheckerOption {
-	return func(c *checker) {
-		if check == nil {
-			return
-		}
-		if c.checks == nil {
-			c.checks = make([]*Check, 0)
-		}
-		c.checks = append(c.checks, check)
+	return func(c *Checker) {
+		_ = c.AddCheck(check)
 	}
 }
 
 // WithCheckerChecks adds multiple checks to the checker.
 func WithCheckerChecks(checks ...*Check) CheckerOption {
-	return func(c *checker) {
+	return func(c *Checker) {
 		for _, check := range checks {
 			WithCheckerCheck(check)(c)
 		}
@@ -39,14 +20,14 @@ func WithCheckerChecks(checks ...*Check) CheckerOption {
 
 // WithCheckerHTTPCodeUp sets the HTTP status code when the system is up.
 func WithCheckerHTTPCodeUp(code int) CheckerOption {
-	return func(c *checker) {
+	return func(c *Checker) {
 		c.httpStatusCodeUp = code
 	}
 }
 
 // WithCheckerHTTPCodeDown sets the HTTP status code when the system is down.
 func WithCheckerHTTPCodeDown(code int) CheckerOption {
-	return func(c *checker) {
+	return func(c *Checker) {
 		c.httpStatusCodeDown = code
 	}
 }

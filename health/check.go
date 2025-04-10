@@ -33,7 +33,7 @@ type Check struct {
 	state *State
 }
 
-// NewCheck creates a new Check
+// NewCheck creates a new Check. Every check should have a unique name.
 //
 // You are able to return custom statuses by returning a StatusError from the check function. This way you can perform
 // checks that return a status other than up or down. For example, you can return a status of "degraded" if the check

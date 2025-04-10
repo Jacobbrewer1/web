@@ -10,7 +10,7 @@ type MockCheckerOption struct {
 }
 
 // Execute provides a mock function with given fields: _a0
-func (_m *MockCheckerOption) Execute(_a0 *checker) {
+func (_m *MockCheckerOption) Execute(_a0 *Checker) {
 	_m.Called(_a0)
 }
 

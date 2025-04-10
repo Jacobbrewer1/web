@@ -18,14 +18,11 @@ func TestNewChecker(t *testing.T) {
 		return nil
 	})
 
-	got := NewChecker(WithCheckerCheck(gotCheck))
+	c := NewChecker(WithCheckerCheck(gotCheck))
 
-	c, ok := got.(*checker)
-	require.True(t, ok, "NewChecker() should return a *checker")
 	require.NotNil(t, c)
 	require.Equal(t, http.StatusOK, c.httpStatusCodeUp)
 	require.Equal(t, http.StatusServiceUnavailable, c.httpStatusCodeDown)
-	require.NotNil(t, c.baseCtx, "NewChecker() should set the base context")
 }
 
 func TestNewCheckerHandler_Single(t *testing.T) {
@@ -224,11 +221,8 @@ func TestChecker_HttpCodeFromStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := NewChecker()
-			c, ok := got.(*checker)
-			require.True(t, ok, "NewChecker() should return a *checker")
+			c := NewChecker()
 			require.NotNil(t, c)
-
 			require.Equal(t, tt.expectedStatus, c.httpCodeFromStatus(tt.status))
 		})
 	}
