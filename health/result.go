@@ -15,7 +15,7 @@ type Result struct {
 	Timestamp *time.Time `json:"timestamp,omitempty"`
 
 	// Details is the details of the check.
-	Details map[string]Result `json:"details,omitempty"`
+	Details map[string]*Result `json:"details,omitempty"`
 
 	// Error is the error returned by the check.
 	Error string `json:"error,omitempty"`
@@ -23,10 +23,9 @@ type Result struct {
 
 func newResult() *Result {
 	return &Result{
-		mtx:       new(sync.RWMutex),
-		Status:    StatusUnknown,
-		Details:   make(map[string]Result),
-		Timestamp: nil,
+		mtx:     new(sync.RWMutex),
+		Status:  StatusUnknown,
+		Details: make(map[string]*Result),
 	}
 }
 
@@ -51,12 +50,12 @@ func (r *Result) SetStatus(status Status) {
 	}
 }
 
-func (r *Result) addDetail(name string, result Result) {
+func (r *Result) addDetail(name string, result *Result) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
 	if r.Details == nil {
-		r.Details = make(map[string]Result)
+		r.Details = make(map[string]*Result)
 	}
 
 	r.Details[name] = result

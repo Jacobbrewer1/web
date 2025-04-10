@@ -77,6 +77,10 @@ func (c *checker) Check(ctx context.Context) *Result {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	result := newResult()
 
 	wg := new(sync.WaitGroup)
@@ -96,10 +100,10 @@ func (c *checker) Check(ctx context.Context) *Result {
 				checkResult.Error = err.Error()
 			}
 			checkResult.SetStatus(checkStatus)
-			checkResult.SetTimestamp(Timestamp())
+			checkResult.SetTimestamp(timestamp())
 
 			result.SetStatus(checkResult.Status)
-			result.addDetail(check.String(), *checkResult)
+			result.addDetail(check.String(), checkResult)
 		}(check, result)
 	}
 

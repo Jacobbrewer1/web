@@ -16,6 +16,13 @@ func WithCheckTimeout(timeout time.Duration) CheckOption {
 	}
 }
 
+// WithNoCheckTimeout has the same effect as WithCheckTimeout(0).
+// It disables the timeout for the check and allows the check to run indefinitely. This should be used with caution,
+// as it can lead to hangs if the check never returns.
+func WithNoCheckTimeout() CheckOption {
+	return WithCheckTimeout(0)
+}
+
 // WithCheckErrorGracePeriod sets the maximum time the check can be in an error state before it is marked as down.
 func WithCheckErrorGracePeriod(maxTimeInError time.Duration) CheckOption {
 	return func(c *Check) {
