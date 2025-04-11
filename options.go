@@ -316,7 +316,7 @@ func WithInClusterNatsClient() StartOption {
 	return WithNatsClient(inClusterNatsEndpoint)
 }
 
-// WithNatsJetStream is a StartOption that sets up nats jetstream.
+// WithNatsJetStream is a StartOption that sets up nats jetstream with the given stream name, retention policy, and subjects.
 func WithNatsJetStream(streamName string, retentionPolicy jetstream.RetentionPolicy, subjects []string) StartOption {
 	return func(a *App) error {
 		js, err := jetstream.New(a.natsClient)
