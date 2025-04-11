@@ -21,7 +21,7 @@ func BenchmarkDeDupe_WithAttrs(b *testing.B) {
 	attr := slog.String("key", "value")
 
 	// Benchmark logging with deduplication and attribute handling
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		// Use the logger's Info method to log with attributes
 		handler.Info("test", attr)
 	}
@@ -62,7 +62,7 @@ func BenchmarkDeDupe_Handle(b *testing.B) {
 	b.ResetTimer()
 
 	// Benchmark logging with deduplication by calling the handler's Handle method
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		err := handler.Handler().Handle(context.Background(), record)
 		require.NoError(b, err)
 	}

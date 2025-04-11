@@ -16,7 +16,7 @@ func (d *dedupeHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return d.base.Enabled(ctx, level)
 }
 
-func (d *dedupeHandler) Handle(ctx context.Context, record slog.Record) error {
+func (d *dedupeHandler) Handle(ctx context.Context, record slog.Record) error { // nolint:gocritic // Part of an interface
 	// Don't modify the original record — add deduplicated attrs temporarily
 	record = record.Clone()
 	record.AddAttrs(d.attrs...)
