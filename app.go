@@ -86,7 +86,7 @@ type (
 		// podInformer is an informer for Kubernetes Pod objects.
 		podInformer kubeCache.SharedIndexInformer
 
-		// podLister is the pod listener for the application.
+		// podLister is a lister for Kubernetes Pod objects.
 		podLister listersv1.PodLister
 
 		// leaderElection is the leader election for the application.
