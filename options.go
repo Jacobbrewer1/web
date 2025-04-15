@@ -20,6 +20,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/leaderelection"
@@ -340,6 +341,22 @@ func WithNatsJetStream(streamName string, retentionPolicy jetstream.RetentionPol
 			return fmt.Errorf("failed to get stream: %w", err)
 		}
 
+		return nil
+	}
+}
+
+// WithKubernetesPodInformer is a StartOption that initialises a Kubernetes SharedInformerFactory and informer for Kubernetes Pod objects.
+func WithKubernetesPodInformer(informerOptions ...informers.SharedInformerOption) StartOption {
+	return func(a *App) error {
+		if a.kubeClient == nil {
+			return errors.New("must set up kube client before pod lister, ensure WithInClusterKubeClient is called")
+		}
+
+		initKubernetesInformerFactory(a, informerOptions...)
+
+		a.l.Info("creating kubernetes pod informer")
+		a.podInformer = a.kubernetesInformerFactory.Core().V1().Pods().Informer()
+		a.podLister = a.kubernetesInformerFactory.Core().V1().Pods().Lister()
 		return nil
 	}
 }

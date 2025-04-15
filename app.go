@@ -24,7 +24,10 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	listersv1 "k8s.io/client-go/listers/core/v1"
+	kubeCache "k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/leaderelection"
 )
 
@@ -77,6 +80,15 @@ type (
 		// kubeClient interacts with the Kubernetes API server.
 		kubeClient kubernetes.Interface
 
+		// kubernetesInformerFactory is a factory used for initialising a pod informer.
+		kubernetesInformerFactory informers.SharedInformerFactory
+
+		// podInformer is an informer for Kubernetes Pod objects.
+		podInformer kubeCache.SharedIndexInformer
+
+		// podLister is the pod listener for the application.
+		podLister listersv1.PodLister
+
 		// leaderElection is the leader election for the application.
 		leaderElection *leaderelection.LeaderElector
 
@@ -93,7 +105,7 @@ type (
 		indefiniteAsyncTasks sync.Map
 
 		// serviceEndpointHashBucket is the service endpoint hash bucket for the application.
-		serviceEndpointHashBucket cache.HashBucket
+		serviceEndpointHashBucket *cache.ServiceEndpointHashBucket
 
 		// natsClient is the nats client for the application.
 		natsClient *nats.Conn
@@ -414,6 +426,22 @@ func (a *App) CreateNatsJetStreamConsumer(consumerName, subjectFilter string) (j
 	return cons, nil
 }
 
-func (a *App) HashBucket() cache.HashBucket {
+// ServiceEndpointHashBucket returns the service endpoint hash bucket for the application.
+func (a *App) ServiceEndpointHashBucket() *cache.ServiceEndpointHashBucket {
 	return a.serviceEndpointHashBucket
+}
+
+// PodLister returns the pod lister for the application.
+func (a *App) PodLister() listersv1.PodLister {
+	return a.podLister
+}
+
+// PodInformer returns the pod informer for the application.
+func (a *App) PodInformer() kubeCache.SharedIndexInformer {
+	return a.podInformer
+}
+
+// KubernetesInformerFactory returns the Kubernetes informer factory for the application.
+func (a *App) KubernetesInformerFactory() informers.SharedInformerFactory {
+	return a.kubernetesInformerFactory
 }
