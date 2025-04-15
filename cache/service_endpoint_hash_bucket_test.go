@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"io"
 	"log/slog"
 	"testing"
 	"time"
@@ -44,7 +43,7 @@ func Test_Lifecycle(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	l := slog.New(slog.NewTextHandler(io.Discard, nil))
+	l := slog.New(slog.DiscardHandler)
 	k := fake.NewClientset(ep)
 	sb := NewServiceEndpointHashBucket(l, k, "my-svc", "my-ns", "")
 	require.NoError(t, sb.Start(ctx))
@@ -97,7 +96,7 @@ func Test_onEndpointUpdate(t *testing.T) {
 	t.Parallel()
 
 	sb := &ServiceEndpointHashBucket{
-		l: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		l: slog.New(slog.DiscardHandler),
 		hr: hashring.New([]string{
 			"a",
 			"b",
