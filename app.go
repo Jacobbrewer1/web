@@ -89,6 +89,12 @@ type (
 		// podLister is a lister for Kubernetes Pod objects.
 		podLister listersv1.PodLister
 
+		// secretInformer is an informer for Kubernetes Secret objects.
+		secretInformer kubeCache.SharedIndexInformer
+
+		// secretLister is a lister for Kubernetes Secret objects.
+		secretLister listersv1.SecretLister
+
 		// leaderElection is the leader election for the application.
 		leaderElection *leaderelection.LeaderElector
 
@@ -444,4 +450,14 @@ func (a *App) PodInformer() kubeCache.SharedIndexInformer {
 // KubernetesInformerFactory returns the Kubernetes informer factory for the application.
 func (a *App) KubernetesInformerFactory() informers.SharedInformerFactory {
 	return a.kubernetesInformerFactory
+}
+
+// SecretLister returns the secret lister for the application.
+func (a *App) SecretLister() listersv1.SecretLister {
+	return a.secretLister
+}
+
+// SecretInformer returns the secret informer for the application.
+func (a *App) SecretInformer() kubeCache.SharedIndexInformer {
+	return a.secretInformer
 }
