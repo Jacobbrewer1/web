@@ -152,7 +152,7 @@ func WithLeaderElection(lockName string) StartOption {
 			return errors.New("lock name cannot be empty")
 		}
 
-		kc := a.KubeClient()
+		kubeClient := a.KubeClient()
 
 		klog.SetSlogLogger(logging.LoggerWithComponent(a.Logger(), "klog"))
 
@@ -171,7 +171,7 @@ func WithLeaderElection(lockName string) StartOption {
 					Name:      lockName,
 					Namespace: ns,
 				},
-				Client: kc.CoordinationV1(),
+				Client: kubeClient.CoordinationV1(),
 				LockConfig: resourcelock.ResourceLockConfig{
 					Identity: utils.PodName,
 				},
@@ -308,7 +308,7 @@ func WithIndefiniteAsyncTask(name string, fn AsyncTaskFunc) StartOption {
 // WithServiceEndpointHashBucket is a StartOption that sets up the service endpoint hash bucket.
 func WithServiceEndpointHashBucket(appName string) StartOption {
 	return func(a *App) error {
-		kc := a.KubeClient()
+		kubeClient := a.KubeClient()
 
 		ns, err := utils.GetDeployedKubernetesNamespace()
 		if err != nil {
@@ -317,7 +317,7 @@ func WithServiceEndpointHashBucket(appName string) StartOption {
 
 		sb := cache.NewServiceEndpointHashBucket(
 			logging.LoggerWithComponent(a.l, "service_endpoint_hash_bucket"),
-			kc,
+			kubeClient,
 			appName,
 			ns,
 			utils.PodName,
@@ -354,9 +354,9 @@ func WithInClusterNatsClient() StartOption {
 // WithNatsJetStream is a StartOption that sets up nats jetstream with the given stream name, retention policy, and subjects.
 func WithNatsJetStream(streamName string, retentionPolicy jetstream.RetentionPolicy, subjects []string) StartOption {
 	return func(a *App) error {
-		nc := a.NatsClient()
+		natsClient := a.NatsClient()
 
-		js, err := jetstream.New(nc)
+		js, err := jetstream.New(natsClient)
 		if err != nil {
 			return fmt.Errorf("failed to create jetstream: %w", err)
 		}

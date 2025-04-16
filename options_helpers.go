@@ -13,8 +13,8 @@ func initKubernetesInformerFactory(a *App, options ...informers.SharedInformerOp
 		return
 	}
 
-	kc := a.KubeClient()
+	kubeClient := a.KubeClient()
 
 	// Set up a factory and informer to keep track of Kubernetes objects.
-	a.kubernetesInformerFactory = informers.NewSharedInformerFactoryWithOptions(kc, time.Second*30, options...)
+	a.kubernetesInformerFactory = informers.NewSharedInformerFactoryWithOptions(kubeClient, time.Second*30, options...)
 }
