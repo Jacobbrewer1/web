@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/gomodule/redigo/redis"
 	"github.com/jacobbrewer1/goredis"
 	"github.com/jacobbrewer1/vaulty"
@@ -19,6 +20,7 @@ import (
 	"github.com/jacobbrewer1/workerpool"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
+	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -30,6 +32,10 @@ import (
 
 const (
 	inClusterNatsEndpoint = "nats://nats-headless.nats:4222"
+
+	leaderElectionLeaseDuration = 15 * time.Second
+	leaderElectionRenewDeadline = 10 * time.Second
+	leaderElectionRetryPeriod   = 2 * time.Second
 )
 
 var (
@@ -41,6 +47,33 @@ var (
 type AsyncTaskFunc = func(ctx context.Context)
 
 type StartOption func(*App) error
+
+// WithViperConfig is a StartOption that sets up the viper config.
+func WithViperConfig() StartOption {
+	return func(a *App) error {
+		vip := viper.New()
+		vip.SetConfigFile(a.baseCfg.ConfigLocation)
+		if err := vip.ReadInConfig(); err != nil {
+			return fmt.Errorf("error reading config file into viper: %w", err)
+		}
+		return nil
+	}
+}
+
+// WithConfigWatchers is a StartOption that registers functions to be called when the config file changes.
+func WithConfigWatchers(fn ...func()) StartOption {
+	return func(a *App) error {
+		vip := a.Viper()
+		vip.OnConfigChange(func(e fsnotify.Event) {
+			a.l.Info("Config file changed", slog.String(logging.KeyFile, e.Name))
+			for _, f := range fn {
+				f()
+			}
+		})
+		vip.WatchConfig()
+		return nil
+	}
+}
 
 // WithVaultClient is a StartOption that sets up the vault client.
 func WithVaultClient() StartOption {
@@ -119,6 +152,8 @@ func WithLeaderElection(lockName string) StartOption {
 			return errors.New("must set up kube client before leader election, ensure WithInClusterKubeClient is called")
 		} else if utils.PodName == "" {
 			return ErrNoHostname
+		} else if lockName == "" {
+			return errors.New("lock name cannot be empty")
 		}
 
 		klog.SetSlogLogger(logging.LoggerWithComponent(a.l, "klog"))
@@ -143,9 +178,9 @@ func WithLeaderElection(lockName string) StartOption {
 					Identity: utils.PodName,
 				},
 			},
-			LeaseDuration: 15 * time.Second,
-			RenewDeadline: 10 * time.Second,
-			RetryPeriod:   2 * time.Second,
+			LeaseDuration: leaderElectionLeaseDuration,
+			RenewDeadline: leaderElectionRenewDeadline,
+			RetryPeriod:   leaderElectionRetryPeriod,
 			Callbacks: leaderelection.LeaderCallbacks{
 				OnStartedLeading: func(ctx context.Context) {
 					a.l.Info("Started leading")
@@ -193,7 +228,7 @@ func WithHealthCheck(checks ...*health.Check) StartOption {
 		a.servers.Store("health", &http.Server{
 			Addr:              fmt.Sprintf(":%d", HealthPort),
 			Handler:           checker.Handler(),
-			ReadHeaderTimeout: 10 * time.Second,
+			ReadHeaderTimeout: httpReadHeaderTimeout,
 		})
 
 		return nil
@@ -203,21 +238,21 @@ func WithHealthCheck(checks ...*health.Check) StartOption {
 // WithRedisPool is a StartOption that sets up the redis pool.
 func WithRedisPool() StartOption {
 	return func(a *App) error {
-		vc := a.vaultClient
-		if vc == nil {
+		if a.vaultClient == nil {
 			return ErrNilVaultClient
 		}
 
-		keydbSecret, err := vc.Path(a.vip.GetString("vault.keydb.name")).GetKvSecretV2(a.baseCtx)
+		keydbPath := a.vip.GetString("vault.keydb.name")
+		keydbSecret, err := a.vaultClient.Path(keydbPath).GetKvSecretV2(a.baseCtx)
 		if errors.Is(err, vaulty.ErrSecretNotFound) {
-			return fmt.Errorf("secrets not found in vault: %s", a.vip.GetString("vault.keydb.path"))
+			return fmt.Errorf("keydb secrets not found in vault path: %s", keydbPath)
 		} else if err != nil {
-			return fmt.Errorf("error getting secrets from vault: %w", err)
+			return fmt.Errorf("error getting keydb secrets from vault: %w", err)
 		}
 
 		redisPassword, ok := keydbSecret.Data["password"].(string)
 		if !ok {
-			return errors.New("keydb type assertion failed")
+			return fmt.Errorf("invalid password type in keydb secret at path: %s", keydbPath)
 		}
 
 		rp, err := goredis.NewPool(
@@ -302,6 +337,10 @@ func WithServiceEndpointHashBucket(appName string) StartOption {
 // WithNatsClient is a StartOption that sets up the nats client.
 func WithNatsClient(target string) StartOption {
 	return func(a *App) error {
+		if target == "" {
+			return errors.New("target cannot be empty")
+		}
+
 		nc, err := nats.Connect(target)
 		if err != nil {
 			return fmt.Errorf("failed to connect to nats: %w", err)

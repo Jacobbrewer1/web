@@ -34,6 +34,9 @@ import (
 const (
 	MetricsPort = 9090
 	HealthPort  = 9091
+
+	httpReadHeaderTimeout = 10 * time.Second
+	shutdownTimeout       = 15 * time.Second
 )
 
 var (
@@ -42,10 +45,12 @@ var (
 )
 
 type (
+	// AppConfig is the configuration for the application.
 	AppConfig struct {
 		ConfigLocation string `env:"CONFIG_LOCATION" envDefault:"config.json"`
 	}
 
+	// App is the application struct.
 	App struct {
 		// l is the logger for the application.
 		l *slog.Logger
@@ -137,18 +142,11 @@ func NewApp(l *slog.Logger) (*App, error) {
 		return nil, fmt.Errorf("failed to parse app config: %w", err)
 	}
 
-	vip := viper.New()
-	vip.SetConfigFile(baseCfg.ConfigLocation)
-	if err := vip.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("error reading config file: %w", err)
-	}
-
 	return &App{
 		l:              l,
 		baseCfg:        baseCfg,
 		baseCtx:        baseCtx,
 		baseCtxCancel:  baseCtxCancel,
-		vip:            vip,
 		metricsEnabled: true,
 		shutdownWg:     new(sync.WaitGroup),
 	}, nil
@@ -174,7 +172,7 @@ func (a *App) Start(opts ...StartOption) error {
 		a.servers.Store("metrics", &http.Server{
 			Addr:              fmt.Sprintf(":%d", MetricsPort),
 			Handler:           metricsRouter,
-			ReadHeaderTimeout: 10 * time.Second,
+			ReadHeaderTimeout: httpReadHeaderTimeout,
 		})
 	}
 
@@ -195,7 +193,10 @@ func (a *App) Start(opts ...StartOption) error {
 			return false
 		}
 
-		a.startServer(serverName, server)
+		if err := a.startServer(serverName, server); err != nil {
+			a.l.Error("failed to start server", slog.String(logging.KeyServer, serverName), slog.Any(logging.KeyError, err))
+			return false
+		}
 		return true
 	})
 
@@ -256,7 +257,7 @@ func (a *App) Shutdown() {
 		a.baseCtxCancel()
 	}
 
-	ctx, cancel := context.WithTimeout(a.baseCtx, 15*time.Second)
+	ctx, cancel := context.WithTimeout(a.baseCtx, shutdownTimeout)
 	defer cancel()
 
 	a.servers.Range(func(name, srv any) bool {
@@ -303,26 +304,45 @@ func (a *App) Shutdown() {
 
 // Logger returns the logger for the application.
 func (a *App) Logger() *slog.Logger {
+	if a.l == nil {
+		panic("logger has not been registered")
+	}
 	return a.l
 }
 
 // VaultClient returns the vault client for the application.
 func (a *App) VaultClient() vaulty.Client {
+	if a.vaultClient == nil {
+		a.l.Error("vault client has not been registered")
+		panic("vault client has not been registered")
+	}
 	return a.vaultClient
 }
 
 // Viper returns the viper instance for the application.
 func (a *App) Viper() *viper.Viper {
+	if a.vip == nil {
+		a.l.Error("viper instance has not been registered")
+		panic("viper instance has not been registered")
+	}
 	return a.vip
 }
 
 // DBConn returns the database connection for the application.
 func (a *App) DBConn() *repositories.Database {
+	if a.db == nil {
+		a.l.Error("database connection has not been registered")
+		panic("database connection has not been registered")
+	}
 	return a.db
 }
 
 // KubeClient returns the Kubernetes client for the application.
 func (a *App) KubeClient() kubernetes.Interface {
+	if a.kubeClient == nil {
+		a.l.Error("kubernetes client has not been registered")
+		panic("kubernetes client has not been registered")
+	}
 	return a.kubeClient
 }
 
@@ -334,10 +354,9 @@ func (a *App) Done() <-chan struct{} {
 // IsLeader returns true if the application is the leader.
 func (a *App) IsLeader() bool {
 	if a.leaderElection == nil {
-		a.l.Info("leader election not set, assuming leader")
+		a.l.Debug("leader election not set, assuming leader")
 		return true
 	}
-
 	return a.leaderElection.IsLeader()
 }
 
@@ -390,26 +409,46 @@ func (a *App) startAsyncTask(name string, indefinite bool, fn AsyncTaskFunc) {
 
 // RedisPool returns the redis pool for the application.
 func (a *App) RedisPool() goredis.Pool {
+	if a.redisPool == nil {
+		a.l.Error("redis pool has not been registered")
+		panic("redis pool has not been registered")
+	}
 	return a.redisPool
 }
 
 // WorkerPool returns the worker pool for the application.
 func (a *App) WorkerPool() workerpool.Pool {
+	if a.workerPool == nil {
+		a.l.Error("worker pool has not been registered")
+		panic("worker pool has not been registered")
+	}
 	return a.workerPool
 }
 
 // NatsClient returns the NATS client for the application.
 func (a *App) NatsClient() *nats.Conn {
+	if a.natsClient == nil {
+		a.l.Error("nats client has not been registered")
+		panic("nats client has not been registered")
+	}
 	return a.natsClient
 }
 
 // NatsJetStream returns the JetStream stream for the application.
 func (a *App) NatsJetStream() jetstream.JetStream {
+	if a.natsJetStream == nil {
+		a.l.Error("nats jetstream has not been registered")
+		panic("nats jetstream has not been registered")
+	}
 	return a.natsJetStream
 }
 
 // NatsStream returns the NATS stream for the application.
 func (a *App) NatsStream() jetstream.Stream {
+	if a.natsStream == nil {
+		a.l.Error("nats stream has not been registered")
+		panic("nats stream has not been registered")
+	}
 	return a.natsStream
 }
 
@@ -434,30 +473,54 @@ func (a *App) CreateNatsJetStreamConsumer(consumerName, subjectFilter string) (j
 
 // ServiceEndpointHashBucket returns the service endpoint hash bucket for the application.
 func (a *App) ServiceEndpointHashBucket() *cache.ServiceEndpointHashBucket {
+	if a.serviceEndpointHashBucket == nil {
+		a.l.Error("service endpoint hash bucket has not been registered")
+		panic("service endpoint hash bucket has not been registered")
+	}
 	return a.serviceEndpointHashBucket
 }
 
 // PodLister returns the pod lister for the application.
 func (a *App) PodLister() listersv1.PodLister {
+	if a.podLister == nil {
+		a.l.Error("pod lister has not been registered")
+		panic("pod lister has not been registered")
+	}
 	return a.podLister
 }
 
 // PodInformer returns the pod informer for the application.
 func (a *App) PodInformer() kubeCache.SharedIndexInformer {
+	if a.podInformer == nil {
+		a.l.Error("pod informer has not been registered")
+		panic("pod informer has not been registered")
+	}
 	return a.podInformer
 }
 
 // KubernetesInformerFactory returns the Kubernetes informer factory for the application.
 func (a *App) KubernetesInformerFactory() informers.SharedInformerFactory {
+	if a.kubernetesInformerFactory == nil {
+		a.l.Error("kubernetes informer factory has not been registered")
+		panic("kubernetes informer factory has not been registered")
+	}
 	return a.kubernetesInformerFactory
 }
 
 // SecretLister returns the secret lister for the application.
 func (a *App) SecretLister() listersv1.SecretLister {
+	if a.secretLister == nil {
+		a.l.Error("secret lister has not been registered")
+		panic("secret lister has not been registered")
+	}
 	return a.secretLister
 }
 
 // SecretInformer returns the secret informer for the application.
 func (a *App) SecretInformer() kubeCache.SharedIndexInformer {
+	if a.secretInformer == nil {
+		a.l.Error("secret informer has not been registered")
+		panic("secret informer has not been registered")
+	}
 	return a.secretInformer
 }
