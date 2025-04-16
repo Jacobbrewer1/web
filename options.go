@@ -79,7 +79,7 @@ func WithConfigWatchers(fn ...func()) StartOption {
 func WithVaultClient() StartOption {
 	return func(a *App) error {
 		vip := a.Viper()
-		vc, err := VaultClient(a.baseCtx, logging.LoggerWithComponent(a.l, "vault"), vip)
+		vc, err := VaultClient(a.baseCtx, logging.LoggerWithComponent(a.Logger(), "vault"), vip)
 		if err != nil {
 			return fmt.Errorf("error getting vault client: %w", err)
 		}
