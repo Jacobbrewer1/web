@@ -56,6 +56,7 @@ func WithViperConfig() StartOption {
 		if err := vip.ReadInConfig(); err != nil {
 			return fmt.Errorf("error reading config file into viper: %w", err)
 		}
+		a.vip = vip
 		return nil
 	}
 }
