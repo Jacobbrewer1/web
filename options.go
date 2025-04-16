@@ -78,7 +78,8 @@ func WithConfigWatchers(fn ...func()) StartOption {
 // WithVaultClient is a StartOption that sets up the vault client.
 func WithVaultClient() StartOption {
 	return func(a *App) error {
-		vc, err := VaultClient(a.baseCtx, logging.LoggerWithComponent(a.l, "vault"), a.vip)
+		vip := a.Viper()
+		vc, err := VaultClient(a.baseCtx, logging.LoggerWithComponent(a.l, "vault"), vip)
 		if err != nil {
 			return fmt.Errorf("error getting vault client: %w", err)
 		}
@@ -92,13 +93,14 @@ func WithVaultClient() StartOption {
 func WithDatabaseFromVault() StartOption {
 	return func(a *App) error {
 		vc := a.VaultClient()
+		vip := a.Viper()
 
 		vs, err := vc.Path(
-			a.vip.GetString("vault.database.role"),
-			vaulty.WithPrefix(a.vip.GetString("vault.database.path")),
+			vip.GetString("vault.database.role"),
+			vaulty.WithPrefix(vip.GetString("vault.database.path")),
 		).GetSecret(a.baseCtx)
 		if errors.Is(err, vaulty.ErrSecretNotFound) {
-			return fmt.Errorf("secrets not found in vault: %s", a.vip.GetString("vault.database.path"))
+			return fmt.Errorf("secrets not found in vault: %s", vip.GetString("vault.database.path"))
 		} else if err != nil {
 			return fmt.Errorf("error getting secrets from vault: %w", err)
 		}
@@ -107,7 +109,7 @@ func WithDatabaseFromVault() StartOption {
 			repositories.WithContext(a.baseCtx),
 			repositories.WithVaultClient(vc),
 			repositories.WithCurrentSecrets(vs),
-			repositories.WithViper(a.vip),
+			repositories.WithViper(vip),
 			repositories.WithConnectorLogger(logging.LoggerWithComponent(a.l, "database_connector")),
 		)
 		if err != nil {
@@ -152,9 +154,10 @@ func WithLeaderElection(lockName string) StartOption {
 			return errors.New("lock name cannot be empty")
 		}
 
+		l := a.Logger()
 		kubeClient := a.KubeClient()
 
-		klog.SetSlogLogger(logging.LoggerWithComponent(a.Logger(), "klog"))
+		klog.SetSlogLogger(logging.LoggerWithComponent(l, "klog"))
 
 		a.leaderChange = make(chan struct{})
 
@@ -181,13 +184,13 @@ func WithLeaderElection(lockName string) StartOption {
 			RetryPeriod:   leaderElectionRetryPeriod,
 			Callbacks: leaderelection.LeaderCallbacks{
 				OnStartedLeading: func(ctx context.Context) {
-					a.l.Info("Started leading")
+					l.Info("Started leading")
 				},
 				OnStoppedLeading: func() {
-					a.l.Info("Stopped leading")
+					l.Info("Stopped leading")
 				},
 				OnNewLeader: func(identity string) {
-					a.l.Info("Leader Changed",
+					l.Info("Leader Changed",
 						slog.String(logging.KeyIdentity, identity),
 					)
 
@@ -238,6 +241,7 @@ func WithRedisPool() StartOption {
 	return func(a *App) error {
 		vip := a.Viper()
 		vc := a.VaultClient()
+		l := a.Logger()
 
 		keydbPath := vip.GetString("vault.keydb.name")
 		keydbSecret, err := vc.Path(keydbPath).GetKvSecretV2(a.baseCtx)
@@ -253,7 +257,7 @@ func WithRedisPool() StartOption {
 		}
 
 		rp, err := goredis.NewPool(
-			goredis.WithLogger(logging.LoggerWithComponent(a.l, "goredis")),
+			goredis.WithLogger(logging.LoggerWithComponent(l, "goredis")),
 			goredis.WithAddress(vip.GetString("keydb.address")),
 			goredis.WithNetwork(vip.GetString("keydb.network")),
 			goredis.WithDialOpts(
@@ -309,6 +313,7 @@ func WithIndefiniteAsyncTask(name string, fn AsyncTaskFunc) StartOption {
 func WithServiceEndpointHashBucket(appName string) StartOption {
 	return func(a *App) error {
 		kubeClient := a.KubeClient()
+		l := a.Logger()
 
 		ns, err := utils.GetDeployedKubernetesNamespace()
 		if err != nil {
@@ -316,7 +321,7 @@ func WithServiceEndpointHashBucket(appName string) StartOption {
 		}
 
 		sb := cache.NewServiceEndpointHashBucket(
-			logging.LoggerWithComponent(a.l, "service_endpoint_hash_bucket"),
+			logging.LoggerWithComponent(l, "service_endpoint_hash_bucket"),
 			kubeClient,
 			appName,
 			ns,
@@ -384,9 +389,11 @@ func WithNatsJetStream(streamName string, retentionPolicy jetstream.RetentionPol
 // WithKubernetesPodInformer is a StartOption that initialises a Kubernetes SharedInformerFactory and informer for Kubernetes Pod objects.
 func WithKubernetesPodInformer(informerOptions ...informers.SharedInformerOption) StartOption {
 	return func(a *App) error {
+		l := a.Logger()
+
 		initKubernetesInformerFactory(a, informerOptions...)
 
-		a.l.Info("creating kubernetes pod informer")
+		l.Info("creating kubernetes pod informer")
 		base := a.kubernetesInformerFactory.Core().V1().Pods()
 		a.podInformer = base.Informer()
 		a.podLister = base.Lister()
@@ -397,9 +404,11 @@ func WithKubernetesPodInformer(informerOptions ...informers.SharedInformerOption
 // WithKubernetesSecretInformer is a StartOption that initialises a Kubernetes SharedInformerFactory and informer for Kubernetes Secret objects.
 func WithKubernetesSecretInformer(informerOptions ...informers.SharedInformerOption) StartOption {
 	return func(a *App) error {
+		l := a.Logger()
+
 		initKubernetesInformerFactory(a, informerOptions...)
 
-		a.l.Info("creating kubernetes secret informer")
+		l.Info("creating kubernetes secret informer")
 		base := a.kubernetesInformerFactory.Core().V1().Secrets()
 		a.secretInformer = base.Informer()
 		a.secretLister = base.Lister()
