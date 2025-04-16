@@ -39,8 +39,8 @@ const (
 )
 
 var (
-	ErrNilVaultClient = errors.New("nil vault client")
-	ErrNoHostname     = errors.New("no hostname provided")
+	// ErrNoHostname is returned when the hostname is not set.
+	ErrNoHostname = errors.New("no hostname provided")
 )
 
 // AsyncTaskFunc is a function that performs an async task.
@@ -91,10 +91,7 @@ func WithVaultClient() StartOption {
 // WithDatabaseFromVault is a StartOption that sets up the database from vault.
 func WithDatabaseFromVault() StartOption {
 	return func(a *App) error {
-		vc := a.vaultClient
-		if vc == nil {
-			return ErrNilVaultClient
-		}
+		vc := a.VaultClient()
 
 		vs, err := vc.Path(
 			a.vip.GetString("vault.database.role"),
@@ -149,15 +146,15 @@ func WithInClusterKubeClient() StartOption {
 func WithLeaderElection(lockName string) StartOption {
 	return func(a *App) error {
 		switch {
-		case a.kubeClient == nil:
-			return errors.New("must set up kube client before leader election, ensure WithInClusterKubeClient is called")
 		case utils.PodName == "":
 			return ErrNoHostname
 		case lockName == "":
 			return errors.New("lock name cannot be empty")
 		}
 
-		klog.SetSlogLogger(logging.LoggerWithComponent(a.l, "klog"))
+		kubeClient := a.KubeClient()
+
+		klog.SetSlogLogger(logging.LoggerWithComponent(a.Logger(), "klog"))
 
 		a.leaderChange = make(chan struct{})
 
@@ -174,7 +171,7 @@ func WithLeaderElection(lockName string) StartOption {
 					Name:      lockName,
 					Namespace: ns,
 				},
-				Client: a.kubeClient.CoordinationV1(),
+				Client: kubeClient.CoordinationV1(),
 				LockConfig: resourcelock.ResourceLockConfig{
 					Identity: utils.PodName,
 				},
@@ -239,12 +236,11 @@ func WithHealthCheck(checks ...*health.Check) StartOption {
 // WithRedisPool is a StartOption that sets up the redis pool.
 func WithRedisPool() StartOption {
 	return func(a *App) error {
-		if a.vaultClient == nil {
-			return ErrNilVaultClient
-		}
+		vip := a.Viper()
+		vc := a.VaultClient()
 
-		keydbPath := a.vip.GetString("vault.keydb.name")
-		keydbSecret, err := a.vaultClient.Path(keydbPath).GetKvSecretV2(a.baseCtx)
+		keydbPath := vip.GetString("vault.keydb.name")
+		keydbSecret, err := vc.Path(keydbPath).GetKvSecretV2(a.baseCtx)
 		if errors.Is(err, vaulty.ErrSecretNotFound) {
 			return fmt.Errorf("keydb secrets not found in vault path: %s", keydbPath)
 		} else if err != nil {
@@ -258,11 +254,11 @@ func WithRedisPool() StartOption {
 
 		rp, err := goredis.NewPool(
 			goredis.WithLogger(logging.LoggerWithComponent(a.l, "goredis")),
-			goredis.WithAddress(a.vip.GetString("keydb.address")),
-			goredis.WithNetwork(a.vip.GetString("keydb.network")),
+			goredis.WithAddress(vip.GetString("keydb.address")),
+			goredis.WithNetwork(vip.GetString("keydb.network")),
 			goredis.WithDialOpts(
 				redis.DialPassword(redisPassword),
-				redis.DialDatabase(a.vip.GetInt("keydb.database")),
+				redis.DialDatabase(vip.GetInt("keydb.database")),
 			),
 		)
 		if err != nil {
@@ -312,9 +308,7 @@ func WithIndefiniteAsyncTask(name string, fn AsyncTaskFunc) StartOption {
 // WithServiceEndpointHashBucket is a StartOption that sets up the service endpoint hash bucket.
 func WithServiceEndpointHashBucket(appName string) StartOption {
 	return func(a *App) error {
-		if a.kubeClient == nil {
-			return errors.New("must set up kube client before service endpoint hash bucket, ensure WithInClusterKubeClient is called")
-		}
+		kubeClient := a.KubeClient()
 
 		ns, err := utils.GetDeployedKubernetesNamespace()
 		if err != nil {
@@ -323,7 +317,7 @@ func WithServiceEndpointHashBucket(appName string) StartOption {
 
 		sb := cache.NewServiceEndpointHashBucket(
 			logging.LoggerWithComponent(a.l, "service_endpoint_hash_bucket"),
-			a.kubeClient,
+			kubeClient,
 			appName,
 			ns,
 			utils.PodName,
@@ -360,7 +354,9 @@ func WithInClusterNatsClient() StartOption {
 // WithNatsJetStream is a StartOption that sets up nats jetstream with the given stream name, retention policy, and subjects.
 func WithNatsJetStream(streamName string, retentionPolicy jetstream.RetentionPolicy, subjects []string) StartOption {
 	return func(a *App) error {
-		js, err := jetstream.New(a.natsClient)
+		natsClient := a.NatsClient()
+
+		js, err := jetstream.New(natsClient)
 		if err != nil {
 			return fmt.Errorf("failed to create jetstream: %w", err)
 		}
@@ -388,10 +384,6 @@ func WithNatsJetStream(streamName string, retentionPolicy jetstream.RetentionPol
 // WithKubernetesPodInformer is a StartOption that initialises a Kubernetes SharedInformerFactory and informer for Kubernetes Pod objects.
 func WithKubernetesPodInformer(informerOptions ...informers.SharedInformerOption) StartOption {
 	return func(a *App) error {
-		if a.kubeClient == nil {
-			return errors.New("must set up kube client before pod informer, ensure WithInClusterKubeClient is called")
-		}
-
 		initKubernetesInformerFactory(a, informerOptions...)
 
 		a.l.Info("creating kubernetes pod informer")
@@ -405,10 +397,6 @@ func WithKubernetesPodInformer(informerOptions ...informers.SharedInformerOption
 // WithKubernetesSecretInformer is a StartOption that initialises a Kubernetes SharedInformerFactory and informer for Kubernetes Secret objects.
 func WithKubernetesSecretInformer(informerOptions ...informers.SharedInformerOption) StartOption {
 	return func(a *App) error {
-		if a.kubeClient == nil {
-			return errors.New("must set up kube client before secret informer, ensure WithInClusterKubeClient is called")
-		}
-
 		initKubernetesInformerFactory(a, informerOptions...)
 
 		a.l.Info("creating kubernetes secret informer")
