@@ -355,8 +355,26 @@ func WithKubernetesPodInformer(informerOptions ...informers.SharedInformerOption
 		initKubernetesInformerFactory(a, informerOptions...)
 
 		a.l.Info("creating kubernetes pod informer")
-		a.podInformer = a.kubernetesInformerFactory.Core().V1().Pods().Informer()
-		a.podLister = a.kubernetesInformerFactory.Core().V1().Pods().Lister()
+		base := a.kubernetesInformerFactory.Core().V1().Pods()
+		a.podInformer = base.Informer()
+		a.podLister = base.Lister()
+		return nil
+	}
+}
+
+// WithKubernetesSecretInformer is a StartOption that initialises a Kubernetes SharedInformerFactory and informer for Kubernetes Secret objects.
+func WithKubernetesSecretInformer(informerOptions ...informers.SharedInformerOption) StartOption {
+	return func(a *App) error {
+		if a.kubeClient == nil {
+			return errors.New("must set up kube client before secret lister, ensure WithInClusterKubeClient is called")
+		}
+
+		initKubernetesInformerFactory(a, informerOptions...)
+
+		a.l.Info("creating kubernetes secret informer")
+		base := a.kubernetesInformerFactory.Core().V1().Secrets()
+		a.secretInformer = base.Informer()
+		a.secretLister = base.Lister()
 		return nil
 	}
 }
