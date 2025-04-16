@@ -148,11 +148,12 @@ func WithInClusterKubeClient() StartOption {
 // WithLeaderElection is a StartOption that sets up leader election.
 func WithLeaderElection(lockName string) StartOption {
 	return func(a *App) error {
-		if a.kubeClient == nil {
+		switch {
+		case a.kubeClient == nil:
 			return errors.New("must set up kube client before leader election, ensure WithInClusterKubeClient is called")
-		} else if utils.PodName == "" {
+		case utils.PodName == "":
 			return ErrNoHostname
-		} else if lockName == "" {
+		case lockName == "":
 			return errors.New("lock name cannot be empty")
 		}
 

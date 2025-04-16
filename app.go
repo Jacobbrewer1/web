@@ -193,10 +193,7 @@ func (a *App) Start(opts ...StartOption) error {
 			return false
 		}
 
-		if err := a.startServer(serverName, server); err != nil {
-			a.l.Error("failed to start server", slog.String(logging.KeyServer, serverName), slog.Any(logging.KeyError, err))
-			return false
-		}
+		a.startServer(serverName, server)
 		return true
 	})
 
