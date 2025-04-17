@@ -148,7 +148,7 @@ func NewApp(l *slog.Logger) (*App, error) {
 		return nil, ErrNilLogger
 	}
 
-	baseCtx, baseCtxCancel := utils.CoreContext()
+	baseCtx, baseCtxCancel := CoreContext()
 
 	baseCfg := new(AppConfig)
 	if err := env.Parse(baseCfg); err != nil {
