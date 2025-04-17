@@ -180,7 +180,7 @@ func (a *App) Start(opts ...StartOption) error {
 		)
 
 		for _, opt := range opts {
-			if err := opt(a); err != nil {
+			if err := opt(a); err != nil { // nolint:revive // Traditional error handling
 				startErr = fmt.Errorf("failed to apply option: %w", err)
 				return
 			}

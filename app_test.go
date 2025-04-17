@@ -20,6 +20,14 @@ func newTestApp(t *testing.T) *App {
 	return app
 }
 
+func newTestServer(t *testing.T, addr string) *http.Server {
+	t.Helper()
+	return &http.Server{
+		Addr:              addr,
+		ReadHeaderTimeout: httpReadHeaderTimeout,
+	}
+}
+
 func TestNewApp(t *testing.T) {
 	t.Parallel()
 
@@ -62,14 +70,14 @@ func TestNewApp(t *testing.T) {
 }
 
 func TestApp_Shutdown(t *testing.T) {
+	t.Parallel()
+
 	t.Run("single shutdown", func(t *testing.T) {
 		t.Parallel()
 
 		app := newTestApp(t)
 
-		server := &http.Server{
-			Addr: ":0",
-		}
+		server := newTestServer(t, ":0")
 		err := app.StartServer("test", server)
 		require.NoError(t, err)
 
@@ -108,13 +116,9 @@ func TestApp_StartServer(t *testing.T) {
 
 	app := newTestApp(t)
 
-	svr1 := &http.Server{
-		Addr: ":8080",
-	}
+	svr1 := newTestServer(t, ":8080")
 
-	svr2 := &http.Server{
-		Addr: ":8081",
-	}
+	svr2 := newTestServer(t, ":8081")
 
 	err := app.StartServer("test1", svr1)
 	require.NoError(t, err)
@@ -312,9 +316,7 @@ func TestApp_Start(t *testing.T) {
 		t.Parallel()
 		app := newTestApp(t)
 
-		app.servers.Store("test", &http.Server{
-			Addr: ":0",
-		})
+		app.servers.Store("test", newTestServer(t, ":8080"))
 
 		err := app.Start(
 			func(a *App) error {
