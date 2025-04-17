@@ -16,6 +16,7 @@ type FixedHashBucket struct {
 	index int
 }
 
+// NewFixedHashBucket instantiates a FixedHashBucket of the provided size.
 func NewFixedHashBucket(size uint) *FixedHashBucket {
 	h := &FixedHashBucket{
 		hr:    hashring.New(make([]string, 0)),
@@ -30,23 +31,17 @@ func NewFixedHashBucket(size uint) *FixedHashBucket {
 	return h
 }
 
+// InBucket returns whether the supplied key resides in the current bucket.
 func (h *FixedHashBucket) InBucket(key string) bool {
 	pos, _ := h.hr.GetNodePos(key)
 	return pos == h.index
 }
 
+// Advance advances the current bucket index by 1. The index automatically wraps on index overflow.
 func (h *FixedHashBucket) Advance() {
 	if h.index+1 >= h.hr.Size() {
 		h.index = 0
 	} else {
 		h.index++
 	}
-}
-
-func (h *FixedHashBucket) GetIndex() int {
-	return h.index
-}
-
-func (h *FixedHashBucket) GetSize() int {
-	return h.hr.Size()
 }
