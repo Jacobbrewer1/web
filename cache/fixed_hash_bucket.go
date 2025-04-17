@@ -24,7 +24,7 @@ func NewFixedHashBucket(size uint) *FixedHashBucket {
 	}
 
 	// Add nodes to the hash ring based on the size.
-	for i := range uint64(size) {
+	for i := uint64(0); i < uint64(size); i++ { // nolint:intrange // Cannot use i range loops for uint64
 		h.hr = h.hr.AddNode(strconv.FormatUint(i, 10))
 	}
 
