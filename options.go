@@ -51,7 +51,7 @@ var (
 
 // AsyncTaskFunc is a function that runs asynchronously and takes a context.
 // The function should respect the context cancellation and return when the context is done.
-type AsyncTaskFunc func(context.Context)
+type AsyncTaskFunc = func(context.Context)
 
 // StartOption is a function that configures the application during startup.
 // It returns an error if the configuration fails.
