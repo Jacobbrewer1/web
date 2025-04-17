@@ -590,6 +590,7 @@ func (a *App) SecretInformer() kubeCache.SharedIndexInformer {
 	return a.secretInformer
 }
 
+// waitUntilStarted waits until the application is started.
 func (a *App) waitUntilStarted() {
 	if a.isStartedChan == nil {
 		a.l.Error("isStartedChan has not been registered")

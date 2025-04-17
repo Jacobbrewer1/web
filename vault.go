@@ -14,6 +14,8 @@ const (
 	defaultVaultAddr = "http://vault-active.vault:8200"
 )
 
+// VaultClient is a function that creates a new Vault client.
+// This is a variable to allow for it to be overridden in tests or other situations.
 var VaultClient = func(ctx context.Context, l *slog.Logger, v *viper.Viper) (vaulty.Client, error) {
 	addr := v.GetString("vault.address")
 	if addr == "" {
