@@ -35,6 +35,7 @@ const (
 	MetricsPort = 9090
 	HealthPort  = 9091
 
+	// httpReadHeaderTimeout is the amount of time allowed to read request headers.
 	httpReadHeaderTimeout = 10 * time.Second
 	shutdownTimeout       = 15 * time.Second
 )
@@ -258,7 +259,8 @@ func (a *App) Start(opts ...StartOption) error {
 	return startErr
 }
 
-// startServer starts the given server.
+// startServer starts the given server and adds it to the shutdown wait group.
+// It logs the server status and handles graceful shutdown.
 func (a *App) startServer(name string, srv *http.Server) {
 	l := a.l.With(slog.String(logging.KeyServer, name))
 
@@ -444,7 +446,9 @@ func (a *App) StartServer(name string, srv *http.Server) error {
 	return nil
 }
 
-// startAsyncTask starts async task f.
+// startAsyncTask starts an async task with the given name and function.
+// If indefinite is true, the task is expected to run until the application shuts down.
+// The function will trigger application shutdown if an indefinite task ends unexpectedly.
 func (a *App) startAsyncTask(name string, indefinite bool, fn AsyncTaskFunc) {
 	a.l.Info("starting async task", slog.String(logging.KeyName, name))
 	a.shutdownWg.Add(1)
@@ -590,6 +594,8 @@ func (a *App) SecretInformer() kubeCache.SharedIndexInformer {
 	return a.secretInformer
 }
 
+// waitUntilStarted blocks until the application has completed its startup sequence.
+// It panics if the isStartedChan is not initialized.
 func (a *App) waitUntilStarted() {
 	if a.isStartedChan == nil {
 		a.l.Error("isStartedChan has not been registered")
