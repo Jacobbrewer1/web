@@ -124,6 +124,9 @@ type (
 		// indefiniteAsyncTasks is the list of indefinite async tasks for the application.
 		indefiniteAsyncTasks sync.Map
 
+		// fixedHashBucket is the fixed hash bucket for the application.
+		fixedHashBucket *cache.FixedHashBucket
+
 		// serviceEndpointHashBucket is the service endpoint hash bucket for the application.
 		serviceEndpointHashBucket *cache.ServiceEndpointHashBucket
 
@@ -522,6 +525,15 @@ func (a *App) CreateNatsJetStreamConsumer(consumerName, subjectFilter string) (j
 	}
 
 	return cons, nil
+}
+
+// FixedHashBucket returns the fixed hash bucket for the application.
+func (a *App) FixedHashBucket() *cache.FixedHashBucket {
+	if a.fixedHashBucket == nil {
+		a.l.Error("fixed hash bucket has not been registered")
+		panic("fixed hash bucket has not been registered")
+	}
+	return a.fixedHashBucket
 }
 
 // ServiceEndpointHashBucket returns the service endpoint hash bucket for the application.
