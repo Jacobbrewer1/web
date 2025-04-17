@@ -301,15 +301,27 @@ func TestApp_Start(t *testing.T) {
 		app := newTestApp(t)
 
 		taskCalled := false
-		app.indefiniteAsyncTasks.Store("test", AsyncTaskFunc(func(ctx context.Context) {
+		app.indefiniteAsyncTasks.Store("test", func(ctx context.Context) {
 			taskCalled = true
 			<-ctx.Done()
-		}))
+		})
 
 		err := app.Start()
 		require.NoError(t, err)
 		time.Sleep(50 * time.Millisecond)
 		require.True(t, taskCalled, "async task should be called")
+	})
+
+	t.Run("with async tasks bad func", func(t *testing.T) {
+		t.Parallel()
+		app := newTestApp(t)
+
+		app.indefiniteAsyncTasks.Store("test", func(ctx context.Context) error {
+			return nil
+		})
+
+		err := app.Start()
+		require.EqualError(t, err, "async task initialization error: failed to cast task function test to AsyncTaskFunc")
 	})
 
 	t.Run("async shutdown on error", func(t *testing.T) {
