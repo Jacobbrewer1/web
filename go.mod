@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	github.com/caarlos0/env/v10 v10.0.0
-	github.com/fsnotify/fsnotify v1.8.0
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/gomodule/redigo v1.9.2
 	github.com/gorilla/mux v1.8.1
 	github.com/jacobbrewer1/goredis v0.1.7
