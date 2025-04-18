@@ -60,7 +60,6 @@ var IsModified = sync.OnceValue(func() bool {
 
 			containsChanges, err := strconv.ParseBool(setting.Value)
 			if err != nil {
-				// Log or handle the error as needed. Defaulting to false for invalid values.
 				return false
 			}
 			return containsChanges
