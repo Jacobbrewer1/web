@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/jacobbrewer1/goredis v0.1.7
 	github.com/jacobbrewer1/uhttp v0.0.12
-	github.com/jacobbrewer1/vaulty v0.1.10
+	github.com/jacobbrewer1/vaulty v0.1.12-0.20250418140609-e317ea9dcb64
 	github.com/jacobbrewer1/workerpool v0.0.4
 	github.com/nats-io/nats.go v1.41.1
 	github.com/prometheus/client_golang v1.22.0
@@ -37,7 +37,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
-	github.com/go-sql-driver/mysql v1.9.0 // indirect
+	github.com/go-sql-driver/mysql v1.9.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
