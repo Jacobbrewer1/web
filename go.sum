@@ -45,8 +45,8 @@ github.com/go-openapi/swag v0.22.3/go.mod h1:UzaqsxGiab7freDnrUUra0MwWfN/q7tE4j+
 github.com/go-openapi/swag v0.23.0 h1:vsEVJDUo2hPJ2tu0/Xc+4noaxyEffXNIs3cOULZ+GrE=
 github.com/go-openapi/swag v0.23.0/go.mod h1:esZ8ITTYEsH1V2trKHjAN8Ai7xHb8RV+YSZ577vPjgQ=
 github.com/go-sql-driver/mysql v1.8.1/go.mod h1:wEBSXgmK//2ZFJyE+qWnIsVGmvmEKlqwuVSjsCm7DZg=
-github.com/go-sql-driver/mysql v1.9.0 h1:Y0zIbQXhQKmQgTp44Y1dp3wTXcn804QoTptLZT1vtvo=
-github.com/go-sql-driver/mysql v1.9.0/go.mod h1:pDetrLJeA3oMujJuvXc8RJoasr589B6A9fwzD3QMrqw=
+github.com/go-sql-driver/mysql v1.9.2 h1:4cNKDYQ1I84SXslGddlsrMhc8k4LeDVj6Ad6WRjiHuU=
+github.com/go-sql-driver/mysql v1.9.2/go.mod h1:qn46aNg1333BRMNU69Lq93t8du/dwxI64Gl8i5p1WMU=
 github.com/go-task/slim-sprig/v3 v3.0.0 h1:sUs3vkvUymDpBKi3qH1YSqBQk9+9D/8M2mN1vB6EwHI=
 github.com/go-task/slim-sprig/v3 v3.0.0/go.mod h1:W848ghGpv3Qj3dhTPRyJypKRiqCdHZiAzKg9hl15HA8=
 github.com/go-test/deep v1.0.2 h1:onZX1rnHT3Wv6cqNgYyFOOlgVKJrksuCMCRvJStbMYw=
@@ -115,8 +115,8 @@ github.com/jacobbrewer1/goredis v0.1.7 h1:ONJcWQ6uBCt86VG7LfYhNYP8Ug2t+1rwON/90i
 github.com/jacobbrewer1/goredis v0.1.7/go.mod h1:eCXwgcthbWiBBqIBTOhkj5YN0awE0ExGyAc56qSnWj0=
 github.com/jacobbrewer1/uhttp v0.0.12 h1:815Gz4rH7SEwkWPw73XtPUTBAUeyiw19EoybHtX3ggA=
 github.com/jacobbrewer1/uhttp v0.0.12/go.mod h1:VcQ3tWUZv+L1l+xNLkNKhIarKL0lqg8QQFU1zLYgSaQ=
-github.com/jacobbrewer1/vaulty v0.1.10 h1:8GT7fzQsZKh2hd4cY1OqYXXJVWb5f26Jab0KMKvJ15U=
-github.com/jacobbrewer1/vaulty v0.1.10/go.mod h1:VYnjOeOhXuN1nlUHhsmN3soWjVmUBIRmnJj6sKC3EIo=
+github.com/jacobbrewer1/vaulty v0.1.12-0.20250418140609-e317ea9dcb64 h1:yrgTkKyAbGDkweoNoQeN5Ef3//TN0tjTJsO+OqSwKPo=
+github.com/jacobbrewer1/vaulty v0.1.12-0.20250418140609-e317ea9dcb64/go.mod h1:hncWoF2yQ+ZJKfoIy7JaGkju+k0hlU6GVBNq2y38e1k=
 github.com/jacobbrewer1/workerpool v0.0.4 h1:jETZCLCXZzzMCRtL0kPae9NTOymbztd4bg4Ba7i1UU8=
 github.com/jacobbrewer1/workerpool v0.0.4/go.mod h1:m4t+CpY0s+Sv95Vq5OmtDYD+eXgQ0slVwJKnN3RkOkI=
 github.com/jinzhu/copier v0.4.0 h1:w3ciUoD19shMCRargcpm0cm91ytaBhDvuRpz1ODO/U8=
