@@ -20,7 +20,7 @@ func TestWrapHandler(t *testing.T) {
 		}
 
 		wrapped := WrapHandler(handler)
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 		rr := httptest.NewRecorder()
 
 		wrapped.ServeHTTP(rr, req)
@@ -45,7 +45,7 @@ func TestWrapHandler(t *testing.T) {
 		}
 
 		wrapped := WrapHandler(handler, middleware)
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 		rr := httptest.NewRecorder()
 
 		wrapped.ServeHTTP(rr, req)
@@ -76,7 +76,7 @@ func TestWrapHandler(t *testing.T) {
 		}
 
 		wrapped := WrapHandler(handler, middleware1, middleware2)
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 		rr := httptest.NewRecorder()
 
 		wrapped.ServeHTTP(rr, req)
@@ -92,7 +92,7 @@ func TestWrapHandler(t *testing.T) {
 		}
 
 		wrapped := WrapHandler(handler, nil)
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 		rr := httptest.NewRecorder()
 
 		wrapped.ServeHTTP(rr, req)

@@ -27,7 +27,7 @@ func TestInstrumentDuration(t *testing.T) {
 	middleware := InstrumentDuration(metric)
 	wrapped := middleware(handler)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	rr := httptest.NewRecorder()
 
 	wrapped.ServeHTTP(rr, req)
@@ -56,7 +56,7 @@ func TestInstrumentCounter(t *testing.T) {
 	middleware := InstrumentCounter(metric)
 	wrapped := middleware(handler)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	rr := httptest.NewRecorder()
 
 	wrapped.ServeHTTP(rr, req)
@@ -85,7 +85,7 @@ func TestInstrumentRequestSize(t *testing.T) {
 	middleware := InstrumentRequestSize(metric)
 	wrapped := middleware(handler)
 
-	req := httptest.NewRequest(http.MethodPost, "/", nil)
+	req := httptest.NewRequest(http.MethodPost, "/", http.NoBody)
 	req.Header.Set("Content-Length", "100")
 	rr := httptest.NewRecorder()
 
@@ -109,14 +109,13 @@ func TestInstrumentResponseSize(t *testing.T) {
 	)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte("test response"))
-		require.NoError(t, err)
+		_, _ = w.Write([]byte("test response"))
 	})
 
 	middleware := InstrumentResponseSize(metric)
 	wrapped := middleware(handler)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	rr := httptest.NewRecorder()
 
 	wrapped.ServeHTTP(rr, req)
