@@ -348,11 +348,13 @@ func TestApp_WaitUntilStarted(t *testing.T) {
 	done := make(chan struct{})
 
 	// Start the app in a goroutine
+	errChan := make(chan error, 1)
 	go func() {
-		err := app.Start()
-		require.NoError(t, err)
+		errChan <- app.Start()
 	}()
 
+	err := <-errChan
+	require.NoError(t, err)
 	// Wait for startup in a separate goroutine
 	go func() {
 		app.waitUntilStarted()
