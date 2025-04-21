@@ -158,7 +158,7 @@ github.com/jacobbrewer1/goredis
 ## explicit; go 1.24
 github.com/jacobbrewer1/uhttp
 github.com/jacobbrewer1/uhttp/common
-# github.com/jacobbrewer1/vaulty v0.1.12-0.20250418140609-e317ea9dcb64
+# github.com/jacobbrewer1/vaulty v0.1.12
 ## explicit; go 1.24
 github.com/jacobbrewer1/vaulty
 github.com/jacobbrewer1/vaulty/vsql

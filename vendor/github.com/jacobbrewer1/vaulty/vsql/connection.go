@@ -13,6 +13,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+// ConnectDB establishes a connection to the database using the provided Vault client and configuration.
+// Once the connection is established, it starts a goroutine to renew the database credentials from Vault.
+// It returns a pointer to the Database instance and will replace the existing connection when the credentials are renewed.
 func ConnectDB(
 	ctx context.Context,
 	l *slog.Logger,

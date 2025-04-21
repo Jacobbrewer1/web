@@ -115,8 +115,8 @@ github.com/jacobbrewer1/goredis v0.1.7 h1:ONJcWQ6uBCt86VG7LfYhNYP8Ug2t+1rwON/90i
 github.com/jacobbrewer1/goredis v0.1.7/go.mod h1:eCXwgcthbWiBBqIBTOhkj5YN0awE0ExGyAc56qSnWj0=
 github.com/jacobbrewer1/uhttp v0.0.12 h1:815Gz4rH7SEwkWPw73XtPUTBAUeyiw19EoybHtX3ggA=
 github.com/jacobbrewer1/uhttp v0.0.12/go.mod h1:VcQ3tWUZv+L1l+xNLkNKhIarKL0lqg8QQFU1zLYgSaQ=
-github.com/jacobbrewer1/vaulty v0.1.12-0.20250418140609-e317ea9dcb64 h1:yrgTkKyAbGDkweoNoQeN5Ef3//TN0tjTJsO+OqSwKPo=
-github.com/jacobbrewer1/vaulty v0.1.12-0.20250418140609-e317ea9dcb64/go.mod h1:hncWoF2yQ+ZJKfoIy7JaGkju+k0hlU6GVBNq2y38e1k=
+github.com/jacobbrewer1/vaulty v0.1.12 h1:LlnP3Bbl1uut6dJjSJGpfGLGyeB7Jm7C3y2sYAlL+rs=
+github.com/jacobbrewer1/vaulty v0.1.12/go.mod h1:hncWoF2yQ+ZJKfoIy7JaGkju+k0hlU6GVBNq2y38e1k=
 github.com/jacobbrewer1/workerpool v0.0.4 h1:jETZCLCXZzzMCRtL0kPae9NTOymbztd4bg4Ba7i1UU8=
 github.com/jacobbrewer1/workerpool v0.0.4/go.mod h1:m4t+CpY0s+Sv95Vq5OmtDYD+eXgQ0slVwJKnN3RkOkI=
 github.com/jinzhu/copier v0.4.0 h1:w3ciUoD19shMCRargcpm0cm91ytaBhDvuRpz1ODO/U8=

@@ -14,6 +14,8 @@ var (
 	newDbPingInterval = 500 * time.Millisecond
 )
 
+// Database represents a database connection
+// It embeds the sqlx.DB struct to provide additional functionality and methods for interacting with the database.
 type Database struct {
 	*sqlx.DB
 }
@@ -27,6 +29,10 @@ func NewDatabase(db *sqlx.DB) *Database {
 	return dbConn
 }
 
+// ReplaceDB replaces the current database connection with a new one.
+// It ensures that the new connection is valid and pings it to check its readiness.
+// If the new connection is valid, it closes the old connection and replaces it with the new one.
+// This is useful for scenarios where the database connection needs to be refreshed or replaced.
 func (d *Database) ReplaceDB(ctx context.Context, newDB *sqlx.DB) error {
 	// Ensure that the new database connection is valid
 	if newDB == nil {
@@ -45,6 +51,7 @@ func (d *Database) ReplaceDB(ctx context.Context, newDB *sqlx.DB) error {
 	return nil
 }
 
+// closeAndReplaceDB closes the old database connection and replaces it with the new one.
 func (d *Database) closeAndReplaceDB(newDB *sqlx.DB) error {
 	// Close the old database connection
 	if err := d.Close(); err != nil {
@@ -57,6 +64,7 @@ func (d *Database) closeAndReplaceDB(newDB *sqlx.DB) error {
 	return nil
 }
 
+// pingDB pings the database to check its readiness.
 func pingDB(ctx context.Context, db *sqlx.DB) error {
 	ctx, cancel := context.WithTimeout(ctx, newDbPingTimeout)
 	defer cancel()
