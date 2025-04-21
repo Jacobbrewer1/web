@@ -340,3 +340,46 @@ func TestApp_Start(t *testing.T) {
 		app.WaitForEnd(app.Shutdown)
 	})
 }
+
+func TestApp_WaitUntilStarted(t *testing.T) {
+	t.Parallel()
+
+	app := newTestApp(t)
+	done := make(chan struct{})
+
+	// Start the app in a goroutine
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- app.Start()
+	}()
+
+	err := <-errChan
+	require.NoError(t, err)
+	// Wait for startup in a separate goroutine
+	go func() {
+		app.waitUntilStarted()
+		close(done)
+	}()
+
+	// First wait should complete within timeout
+	select {
+	case <-done:
+		// Success - app started
+	case <-time.After(2 * time.Second):
+		t.Fatal("first waitUntilStarted call timed out")
+	}
+
+	// Second wait should return immediately
+	secondWaitDone := make(chan struct{})
+	go func() {
+		app.waitUntilStarted()
+		close(secondWaitDone)
+	}()
+
+	select {
+	case <-secondWaitDone:
+		// Success - second wait completed immediately
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("second waitUntilStarted call blocked")
+	}
+}
