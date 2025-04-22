@@ -5,7 +5,7 @@
 This repository contains tools that are commonly used between my golang projects. It allows for the projects to be
 easily structured and maintained. The tools are designed to be used in a modular way, allowing for easy integration into
 existing projects. The repository is easily extensible, allowing for new tools to be added as needed. When creating a
-new web app you will need to provide the logger which is accessible from the app at later stages.
+new web app, ensure you provide a logger; the logger can be accessed later in through the application.
 
 ## Usage
 
