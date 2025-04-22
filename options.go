@@ -229,7 +229,7 @@ func WithHealthCheck(checks ...*health.Check) StartOption {
 		}
 
 		a.servers.Store("health", &http.Server{
-			Addr:              fmt.Sprintf(":%d", HealthPort),
+			Addr:              fmt.Sprintf(":%d", healthPort),
 			Handler:           checker.Handler(),
 			ReadHeaderTimeout: httpReadHeaderTimeout,
 		})

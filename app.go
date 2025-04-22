@@ -32,12 +32,17 @@ import (
 )
 
 const (
-	MetricsPort = 9090
-	HealthPort  = 9091
+	// metricsPort is the port for the metrics server.
+	metricsPort = 9090
+
+	// healthPort is the port for the health server.
+	healthPort = 9091
 
 	// httpReadHeaderTimeout is the amount of time allowed to read request headers.
 	httpReadHeaderTimeout = 10 * time.Second
-	shutdownTimeout       = 15 * time.Second
+
+	// shutdownTimeout is the amount of time allowed for graceful shutdown.
+	shutdownTimeout = 15 * time.Second
 )
 
 var (
@@ -48,6 +53,7 @@ var (
 type (
 	// AppConfig is the configuration for the application.
 	AppConfig struct {
+		// ConfigLocation is the location of the configuration file.
 		ConfigLocation string `env:"CONFIG_LOCATION" envDefault:"config.json"`
 	}
 
@@ -134,7 +140,7 @@ type (
 		// natsClient is the nats client for the application.
 		natsClient *nats.Conn
 
-		// natsJetStream is the nats jetstream for the application.
+		// natsJetStream is the nats JetStream for the application.
 		natsJetStream jetstream.JetStream
 
 		// natsStream is the nats stream for the application.
@@ -194,7 +200,7 @@ func (a *App) Start(opts ...StartOption) error {
 			metricsRouter := mux.NewRouter()
 			metricsRouter.Handle("/metrics", promhttp.Handler())
 			a.servers.Store("metrics", &http.Server{
-				Addr:              fmt.Sprintf(":%d", MetricsPort),
+				Addr:              fmt.Sprintf(":%d", metricsPort),
 				Handler:           metricsRouter,
 				ReadHeaderTimeout: httpReadHeaderTimeout,
 			})
