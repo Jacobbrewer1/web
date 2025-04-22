@@ -101,7 +101,7 @@ var (
 )
 
 var (
-	// ServiceAccountName returns the name of the service account used by the pod. This is read from the Kubernetes service account file.
+	// ServiceAccountName returns the name of the service account used by the pod. This is read from the environment variable SERVICE_ACCOUNT_NAME.
 	ServiceAccountName = sync.OnceValue(func() string {
 		serviceAccountName := os.Getenv(envServiceAccountName)
 		if serviceAccountName != "" {
