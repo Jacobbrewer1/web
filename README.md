@@ -130,7 +130,7 @@ operation, this application makes use of the Downward Kubernetes API to set the 
 The following environment variables should be set within the deployment yaml:
 
 ```yaml
-- name: "SERVICE_ACCOUNT_NAME" # This is used to get the service account name. Additionally Vault will fail to initialize if this is not set.
+- name: "SERVICE_ACCOUNT_NAME" # This is used to get the service account name; additionally, Vault will fail to initialize if this is not set.
   valueFrom:
     fieldRef:
       fieldPath: spec.serviceAccountName
