@@ -65,7 +65,7 @@ type (
 		// baseCfg is the base configuration for the application.
 		baseCfg *AppConfig
 
-		// isStarted a channel that is closed when the application is started.
+		// isStartedChan a channel that is closed when the application is started.
 		isStartedChan chan struct{}
 
 		// startOnce is used to ensure that the start function is only called once.
@@ -137,7 +137,7 @@ type (
 		// natsJetStream is the nats jetstream for the application.
 		natsJetStream jetstream.JetStream
 
-		// natStream is the nats stream for the application.
+		// natsStream is the nats stream for the application.
 		natsStream jetstream.Stream
 	}
 )
