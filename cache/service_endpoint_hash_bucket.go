@@ -22,7 +22,7 @@ var _ HashBucket = new(ServiceEndpointHashBucket)
 // ServiceEndpointHashBucket represents a mechanism which determines whether the current application instance should process
 // a particular key. The bucket size is determined by the number of active endpoints in the supplied Kubernetes service.
 type ServiceEndpointHashBucket struct {
-	mut               sync.Mutex
+	mut               *sync.RWMutex
 	hr                *hashring.HashRing
 	l                 *slog.Logger
 	k                 kubernetes.Interface
@@ -44,6 +44,7 @@ func NewServiceEndpointHashBucket(
 	informerFactory := informers.NewSharedInformerFactory(kubeClient, 10*time.Second)
 	endpointsInformer := informerFactory.Core().V1().Endpoints().Informer()
 	return &ServiceEndpointHashBucket{
+		mut:               new(sync.RWMutex),
 		l:                 l,
 		k:                 kubeClient,
 		appName:           serviceName,
@@ -79,8 +80,13 @@ func (sb *ServiceEndpointHashBucket) Start(ctx context.Context) error {
 
 // InBucket returns whether the supplied key is processed by this endpoint.
 func (sb *ServiceEndpointHashBucket) InBucket(key string) bool {
-	sb.mut.Lock()
-	defer sb.mut.Unlock()
+	sb.mut.RLock()
+	defer sb.mut.RUnlock()
+
+	if sb.hr == nil {
+		sb.l.Error("hash ring is not initialized - has Start() been called?")
+		return false
+	}
 
 	node, _ := sb.hr.GetNode(key)
 	return node == sb.thisPod
