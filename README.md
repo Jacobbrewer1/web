@@ -122,6 +122,34 @@ The config file for the above example is a simple yaml file that contains the fo
 }
 ```
 
+### Metrics
+
+If you want to expose metrics for your application, these are registered by default. You can use the
+`web.WithMetricsEnabled` option to enable or disable the metrics. The metrics are exposed on the `/metrics` endpoint on
+port `9090`. The metrics are registered with the `prometheus` package and are exposed in the `prometheus` format.
+
+### Dynamic Health Checks
+
+If you want to add health checks that state whether the application is healthy or not, you can use the
+`web.WithHealthCheck` option. This option will take a list of health checks that will be run whenever the health check
+endpoint is hit. There is **_NO_** specific endpoint for the health check, it is just the port that is exposed. If you
+provide a path, it is re-routed to the `/` endpoint.
+
+### Options
+
+Please take a look at the `options.go` file for the available options. The options are used to configure the application
+and are passed to the `app.Start()` method. When the application is started, the options are applied in the order they
+are passed, so the order is important. For example, `WithVaultClient` uses the viper config so it should be passed after
+the `WithViperConfig` option.
+
+### Async Tasks
+
+If your application is not using a server, you may be watching some configs for example, or fetching data and placing it
+into a stream, you can use the `web.WithIndefiniteAsyncTask("name", func(ctx) {})` option to run a task that should not
+exit until the application is stopped. If the task exits, the application will stop. The task will be run in a goroutine
+and will be passed a context that will be cancelled when the application is stopped. The application will wait for the
+task to finish before stopping.
+
 ### Deployment
 
 When deploying the application, you will need to ensure that the following environment variables are set for a smooth
