@@ -105,7 +105,7 @@ func main() {
 
 ```
 
-The config file for the above example is a simple yaml file that contains the following:
+The config file for the above example is a simple JSON file that contains the following:
 
 ```json
 {
