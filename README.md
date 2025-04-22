@@ -214,3 +214,9 @@ func main() {
 }
 
 ```
+
+## Installation
+
+```shell
+go get github.com/jacobbrewer1/web
+```
