@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"log/slog"
+	"sync"
 	"testing"
 	"time"
 
@@ -96,7 +97,8 @@ func Test_onEndpointUpdate(t *testing.T) {
 	t.Parallel()
 
 	sb := &ServiceEndpointHashBucket{
-		l: slog.New(slog.DiscardHandler),
+		mut: new(sync.RWMutex),
+		l:   slog.New(slog.DiscardHandler),
 		hr: hashring.New([]string{
 			"a",
 			"b",
@@ -193,4 +195,18 @@ func Test_endpointsToSet(t *testing.T) {
 			},
 		),
 	)
+}
+
+func Test_InBucket_WithoutStart(t *testing.T) {
+	t.Parallel()
+
+	sb := NewServiceEndpointHashBucket(
+		slog.New(slog.DiscardHandler),
+		fake.NewClientset(),
+		"my-svc",
+		"my-ns",
+		"pod-1",
+	)
+
+	require.False(t, sb.InBucket("key"), "should not be in bucket before starting")
 }
