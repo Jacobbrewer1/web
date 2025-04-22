@@ -102,6 +102,7 @@ func main() {
 
 	app.WaitForEnd()
 }
+
 ```
 
 The config file for the above example is a simple yaml file that contains the following:
@@ -176,3 +177,40 @@ The following environment variables should be set within the deployment yaml:
 
 If you require some Kubernetes helpers, you can use the `k8s` package. It contains a few helpers that are useful for
 interacting with Kubernetes. Please look at the files within the `k8s` package for more information.
+
+## Local Development
+
+While the Web module is primarily designed to be run in Kubernetes, it can also be run locally (or without a cluster, in
+a VM depending on your setup).
+
+### Vault Override
+
+If you want to run the application outside of Kubernetes, you will need to override the `VaultClient()` method that is
+called to get the vaulty client. This method has been kept as a variable so that it can be overridden in this scenario.
+
+Please see the example below for how to override the `VaultClient()` method. This will allow you to run the application
+
+```go
+package main
+
+import (
+	"context"
+	"log/slog"
+
+	"github.com/jacobbrewer1/vaulty"
+	"github.com/jacobbrewer1/web"
+	"github.com/spf13/viper"
+)
+
+func main() {
+	web.VaultClient = func(ctx context.Context, l *slog.Logger, v *viper.Viper) (vaulty.Client, error) {
+		vault, err := vaulty.NewClient(vaulty.WithLogger(l)) // Be sure to pass in the authentication method, etc.
+		if err != nil {
+			return nil, err
+		}
+
+		return vault, nil
+	}
+}
+
+```
