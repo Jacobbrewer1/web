@@ -9,8 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jacobbrewer1/web/logging"
 	"github.com/stretchr/testify/require"
+
+	"github.com/jacobbrewer1/web/logging"
 )
 
 func newTestApp(t *testing.T) *App {

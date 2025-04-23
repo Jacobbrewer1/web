@@ -12,14 +12,6 @@ import (
 
 	"github.com/caarlos0/env/v10"
 	"github.com/gorilla/mux"
-	"github.com/jacobbrewer1/goredis"
-	"github.com/jacobbrewer1/uhttp"
-	"github.com/jacobbrewer1/vaulty"
-	"github.com/jacobbrewer1/vaulty/vsql"
-	"github.com/jacobbrewer1/web/cache"
-	"github.com/jacobbrewer1/web/logging"
-	"github.com/jacobbrewer1/web/version"
-	"github.com/jacobbrewer1/workerpool"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -29,6 +21,15 @@ import (
 	listersv1 "k8s.io/client-go/listers/core/v1"
 	kubeCache "k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/leaderelection"
+
+	"github.com/jacobbrewer1/goredis"
+	"github.com/jacobbrewer1/uhttp"
+	"github.com/jacobbrewer1/vaulty"
+	"github.com/jacobbrewer1/vaulty/vsql"
+	"github.com/jacobbrewer1/web/cache"
+	"github.com/jacobbrewer1/web/logging"
+	"github.com/jacobbrewer1/web/version"
+	"github.com/jacobbrewer1/workerpool"
 )
 
 const (
