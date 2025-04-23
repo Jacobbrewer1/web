@@ -31,13 +31,7 @@ type State struct {
 
 func NewState() *State {
 	return &State{
-		lastCheckTime:    time.Time{},
-		lastSuccess:      time.Time{},
-		lastFail:         time.Time{},
-		firstFailInCycle: time.Time{},
-		contiguousFails:  atomic.Uint32{},
-		checkErr:         nil,
-		status:           StatusUnknown,
+		status: StatusUnknown,
 	}
 }
 
