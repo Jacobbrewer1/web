@@ -187,7 +187,7 @@ func (a *App) Start(opts ...StartOption) error {
 		a.l.Info("starting application",
 			slog.String(logging.KeyGitCommit, version.GitCommit()),
 			slog.String(logging.KeyRuntime, fmt.Sprintf("%s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)),
-			slog.String(logging.KeyBuildDate, version.CommitTimestamp().String()),
+			slog.String(logging.KeyCommitTimestamp, version.CommitTimestamp().String()),
 		)
 
 		for _, opt := range opts {
