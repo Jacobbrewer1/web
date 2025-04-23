@@ -10,7 +10,7 @@ const (
 	// KeyRuntime represents the key for the runtime.
 	KeyRuntime = `runtime`
 
-	// KeyCommitTimestamp represents the key for the build date.
+	// KeyCommitTimestamp represents the key for the commit timestamp.
 	KeyCommitTimestamp = `commit_timestamp`
 
 	// KeyError represents the key for the error.
