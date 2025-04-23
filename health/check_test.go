@@ -3,6 +3,7 @@ package health
 import (
 	"context"
 	"errors"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -17,7 +18,7 @@ func TestCheck_Check_Golden(t *testing.T) {
 	c := NewCheck("test", func(ctx context.Context) error {
 		return nil
 	},
-		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state *State) {
 			statusListenerCalled = true
 			require.Equal(t, "test", name)
 			require.Equal(t, StatusUp, state.status)
@@ -31,11 +32,11 @@ func TestCheck_Check_Golden(t *testing.T) {
 		lastCheckTime:   now,
 		lastSuccess:     now,
 		lastFail:        time.Time{},
-		contiguousFails: 0,
+		contiguousFails: atomic.Uint32{},
 		checkErr:        nil,
 		status:          StatusUp,
 	}
-	require.Equal(t, expectedState, c.state)
+	compareState(t, expectedState, c.state)
 	require.True(t, statusListenerCalled)
 }
 
@@ -47,7 +48,7 @@ func TestCheck_Check_Golden_FailCheck(t *testing.T) {
 	c := NewCheck("test", func(ctx context.Context) error {
 		return errors.New("test error")
 	},
-		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state *State) {
 			statusListenerCalled = true
 			require.Equal(t, "test", name)
 			require.Equal(t, StatusDown, state.status)
@@ -61,12 +62,13 @@ func TestCheck_Check_Golden_FailCheck(t *testing.T) {
 		lastCheckTime:    now,
 		lastSuccess:      time.Time{},
 		lastFail:         now,
-		contiguousFails:  1,
+		contiguousFails:  atomic.Uint32{},
 		checkErr:         errors.New("test error"),
 		status:           StatusDown,
 		firstFailInCycle: now,
 	}
-	require.Equal(t, expectedState, c.state)
+	expectedState.contiguousFails.Store(1)
+	compareState(t, expectedState, c.state)
 	require.True(t, statusListenerCalled)
 }
 
@@ -83,7 +85,7 @@ func TestCheck_Check_Golden_SuccessToFailToSuccess(t *testing.T) {
 		}
 		return nil
 	},
-		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state *State) {
 			statusListenerCalled++
 			if statusListenerCalled%2 == 0 {
 				require.Equal(t, "test", name)
@@ -102,11 +104,12 @@ func TestCheck_Check_Golden_SuccessToFailToSuccess(t *testing.T) {
 		lastCheckTime:    now,
 		lastSuccess:      now,
 		lastFail:         time.Time{},
-		contiguousFails:  0,
+		contiguousFails:  atomic.Uint32{},
 		checkErr:         nil,
 		status:           StatusUp,
 		firstFailInCycle: time.Time{},
 	}
+	expectedState.contiguousFails.Store(0)
 	require.Equal(t, expectedState, c.state, "First Check() should update the state correctly")
 
 	err = c.Check(context.Background())
@@ -116,11 +119,12 @@ func TestCheck_Check_Golden_SuccessToFailToSuccess(t *testing.T) {
 		lastCheckTime:    now,
 		lastSuccess:      now,
 		lastFail:         now,
-		contiguousFails:  1,
+		contiguousFails:  atomic.Uint32{},
 		checkErr:         errors.New("test error"),
 		status:           StatusDown,
 		firstFailInCycle: now,
 	}
+	expectedState.contiguousFails.Store(1)
 	require.Equal(t, expectedState, c.state, "Second Check() should update the state correctly")
 
 	err = c.Check(context.Background())
@@ -130,12 +134,13 @@ func TestCheck_Check_Golden_SuccessToFailToSuccess(t *testing.T) {
 		lastCheckTime:    now,
 		lastSuccess:      now,
 		lastFail:         now,
-		contiguousFails:  0,
+		contiguousFails:  atomic.Uint32{},
 		checkErr:         nil,
 		status:           StatusUp,
 		firstFailInCycle: time.Time{},
 	}
-	require.Equal(t, expectedState, c.state)
+	expectedState.contiguousFails.Store(0)
+	compareState(t, expectedState, c.state)
 	require.Equal(t, 3, statusListenerCalled)
 }
 
@@ -148,11 +153,11 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 		return errors.New("test error")
 	},
 		WithCheckMaxFailures(3),
-		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state *State) {
 			statusListenerCalled++
 			require.Equal(t, "test", name)
 
-			if state.contiguousFails < 3 {
+			if state.contiguousFails.Load() < 3 {
 				require.Equal(t, StatusUp, state.status)
 			} else {
 				require.Equal(t, StatusDown, state.status)
@@ -167,11 +172,12 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 		lastCheckTime:    now,
 		lastSuccess:      time.Time{},
 		lastFail:         now,
-		contiguousFails:  1,
+		contiguousFails:  atomic.Uint32{},
 		checkErr:         errors.New("test error"),
 		status:           StatusUp,
 		firstFailInCycle: now,
 	}
+	expectedState.contiguousFails.Store(1)
 	require.Equal(t, expectedState, c.state, "First Check() should update the state correctly")
 	require.Equal(t, 1, statusListenerCalled)
 
@@ -182,11 +188,12 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 		lastCheckTime:    now,
 		lastSuccess:      time.Time{},
 		lastFail:         now,
-		contiguousFails:  2,
+		contiguousFails:  atomic.Uint32{},
 		checkErr:         errors.New("test error"),
 		status:           StatusUp,
 		firstFailInCycle: now,
 	}
+	expectedState.contiguousFails.Store(2)
 	require.Equal(t, expectedState, c.state, "Second Check() should update the state correctly")
 	require.Equal(t, 1, statusListenerCalled)
 
@@ -197,11 +204,12 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 		lastCheckTime:    now,
 		lastSuccess:      time.Time{},
 		lastFail:         now,
-		contiguousFails:  3,
+		contiguousFails:  atomic.Uint32{},
 		checkErr:         errors.New("test error"),
 		status:           StatusDown,
 		firstFailInCycle: now,
 	}
+	expectedState.contiguousFails.Store(3)
 	require.Equal(t, expectedState, c.state, "Third Check() should update the state correctly")
 	require.Equal(t, 2, statusListenerCalled)
 
@@ -212,11 +220,12 @@ func TestCheck_Check_Golden_MaxContiguousFails(t *testing.T) {
 		lastCheckTime:    now,
 		lastSuccess:      time.Time{},
 		lastFail:         now,
-		contiguousFails:  4,
+		contiguousFails:  atomic.Uint32{},
 		checkErr:         errors.New("test error"),
 		status:           StatusDown,
 		firstFailInCycle: now,
 	}
+	expectedState.contiguousFails.Store(4)
 	require.Equal(t, expectedState, c.state, "Fourth Check() should update the state correctly")
 	require.Equal(t, 2, statusListenerCalled)
 }
@@ -236,12 +245,13 @@ func TestCheck_StatusError(t *testing.T) {
 		lastCheckTime:    now,
 		lastSuccess:      time.Time{},
 		lastFail:         now,
-		contiguousFails:  1,
+		contiguousFails:  atomic.Uint32{},
 		checkErr:         NewStatusError(errors.New("test error"), StatusDegraded),
 		status:           StatusDegraded,
 		firstFailInCycle: now,
 	}
-	require.Equal(t, expectedState, c.state)
+	expectedState.contiguousFails.Store(1)
+	compareState(t, expectedState, c.state)
 }
 
 func TestCheck_NoTimeout(t *testing.T) {
@@ -252,7 +262,7 @@ func TestCheck_NoTimeout(t *testing.T) {
 	c := NewCheck("test", func(ctx context.Context) error {
 		return nil
 	},
-		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state *State) {
 			statusListenerCalled = true
 			require.Equal(t, "test", name)
 			require.Equal(t, StatusUp, state.status)
@@ -267,11 +277,11 @@ func TestCheck_NoTimeout(t *testing.T) {
 		lastCheckTime:   now,
 		lastSuccess:     now,
 		lastFail:        time.Time{},
-		contiguousFails: 0,
+		contiguousFails: atomic.Uint32{},
 		checkErr:        nil,
 		status:          StatusUp,
 	}
-	require.Equal(t, expectedState, c.state)
+	compareState(t, expectedState, c.state)
 	require.True(t, statusListenerCalled)
 }
 
@@ -283,7 +293,7 @@ func TestCheck_NoParentContext(t *testing.T) {
 	c := NewCheck("test", func(ctx context.Context) error {
 		return nil
 	},
-		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state *State) {
 			statusListenerCalled = true
 			require.Equal(t, "test", name)
 			require.Equal(t, StatusUp, state.status)
@@ -297,11 +307,12 @@ func TestCheck_NoParentContext(t *testing.T) {
 		lastCheckTime:   now,
 		lastSuccess:     now,
 		lastFail:        time.Time{},
-		contiguousFails: 0,
+		contiguousFails: atomic.Uint32{},
 		checkErr:        nil,
 		status:          StatusUp,
 	}
-	require.Equal(t, expectedState, c.state)
+	expectedState.contiguousFails.Store(0)
+	compareState(t, expectedState, c.state)
 	require.True(t, statusListenerCalled)
 }
 
@@ -315,7 +326,7 @@ func TestCheck_ErrorGracePeriod(t *testing.T) {
 			return errors.New("test error")
 		},
 		WithCheckErrorGracePeriod(5*time.Second),
-		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state *State) {
 			statusChanges = append(statusChanges, state.status)
 		}),
 	)
@@ -365,7 +376,7 @@ func TestCheck_ErrorGracePeriod_WithMaxContiguousFails(t *testing.T) {
 		},
 		WithCheckErrorGracePeriod(5*time.Second),
 		WithCheckMaxFailures(3),
-		WithCheckOnStatusChange(func(ctx context.Context, name string, state State) {
+		WithCheckOnStatusChange(func(ctx context.Context, name string, state *State) {
 			statusChanges = append(statusChanges, state.status)
 		}),
 	)

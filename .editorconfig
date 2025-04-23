@@ -8,6 +8,7 @@ max_line_length = 120
 tab_width = 4
 
 [{*.go,*.go2}]
+indent_style = tab
 ij_go_import_sorting = gofmt
 ij_go_local_group_mode = prefix
 ij_go_local_package_prefixes = github.com/jacobbrewer1
