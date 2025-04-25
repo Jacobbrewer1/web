@@ -148,6 +148,7 @@ func BenchmarkReplaceAttrs(b *testing.B) {
 		},
 	}
 
+	b.ResetTimer()
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
 			b.ReportAllocs()
