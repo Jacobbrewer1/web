@@ -59,6 +59,11 @@ func TestReplaceAttrs(t *testing.T) {
 		expected string
 	}{
 		{
+			name:     "full path with line number",
+			attr:     slog.String(slog.SourceKey, "/path/to/project/internal/pkg/file.go 111"),
+			expected: "pkg/file.go 111",
+		},
+		{
 			name:     "full path",
 			attr:     slog.String(slog.SourceKey, "/path/to/project/internal/pkg/file.go"),
 			expected: "pkg/file.go",
@@ -83,6 +88,16 @@ func TestReplaceAttrs(t *testing.T) {
 			attr:     slog.String("other", "/path/to/file.go"),
 			expected: "/path/to/file.go",
 		},
+		{
+			name:     "bazel path",
+			attr:     slog.String(slog.SourceKey, "gazelle~~go_deps~com_github_jacobbrewer1_web/app.go"),
+			expected: "web/app.go",
+		},
+		{
+			name:     "bazel path with line number",
+			attr:     slog.String(slog.SourceKey, "gazelle~~go_deps~com_github_jacobbrewer1_web/app.go 271"),
+			expected: "web/app.go 271",
+		},
 	}
 
 	for _, tt := range tests {
@@ -99,6 +114,10 @@ func BenchmarkReplaceAttrs(b *testing.B) {
 		name string
 		attr slog.Attr
 	}{
+		{
+			name: "full path with line number",
+			attr: slog.String(slog.SourceKey, "/path/to/project/internal/pkg/file.go 111"),
+		},
 		{
 			name: "full path",
 			attr: slog.String(slog.SourceKey, "/path/to/project/internal/pkg/file.go"),
@@ -118,6 +137,14 @@ func BenchmarkReplaceAttrs(b *testing.B) {
 		{
 			name: "non-source key",
 			attr: slog.String("other", "/path/to/file.go"),
+		},
+		{
+			name: "bazel path",
+			attr: slog.String(slog.SourceKey, "gazelle~~go_deps~com_github_jacobbrewer1_web/app.go"),
+		},
+		{
+			name: "bazel path with line number",
+			attr: slog.String(slog.SourceKey, "gazelle~~go_deps~com_github_jacobbrewer1_web/app.go 271"),
 		},
 	}
 
