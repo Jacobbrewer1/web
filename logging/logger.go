@@ -48,13 +48,13 @@ func replaceAttrs(groups []string, a slog.Attr) slog.Attr {
 		a.Value = slog.StringValue(strings.Join(v[idx:], "/"))
 
 		// Remove any curly braces from the source file. This is needed for the logstash parser.
-		a.Value = slog.StringValue(strings.ReplaceAll(a.Value.String(), "{", ""))
+		a.Value = slog.StringValue(strings.ReplaceAll(valueStr, "{", ""))
 		a.Value = slog.StringValue(strings.ReplaceAll(a.Value.String(), "}", ""))
 
 		// Is the binary compiled with Bazel? We need to trim the path even more than that. Example of source file at this point:
 		// gazelle~~go_deps~com_github_jacobbrewer1_web/app.go 439 need to be trimmed to web/app.go
-		if strings.Contains(a.Value.String(), bazelGazellePrefix) {
-			v := strings.Split(a.Value.String(), bazelGazellePrefix)
+		if strings.Contains(valueStr, bazelGazellePrefix) {
+			v := strings.Split(valueStr, bazelGazellePrefix)
 			if len(v) > 1 {
 				// Extract everything after the gazelle~~go_deps~ prefix
 				path := v[1]
