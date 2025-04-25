@@ -53,8 +53,8 @@ func replaceAttrs(groups []string, a slog.Attr) slog.Attr {
 
 		// Is the binary compiled with Bazel? We need to trim the path even more than that. Example of source file at this point:
 		// gazelle~~go_deps~com_github_jacobbrewer1_web/app.go 439 need to be trimmed to web/app.go
-		if strings.Contains(a.Value.String(), "gazelle~~go_deps~") {
-			v := strings.Split(a.Value.String(), "gazelle~~go_deps~")
+		if strings.Contains(a.Value.String(), bazelGazellePrefix) {
+			v := strings.Split(a.Value.String(), bazelGazellePrefix)
 			if len(v) > 1 {
 				// Extract everything after the gazelle~~go_deps~ prefix
 				path := v[1]
