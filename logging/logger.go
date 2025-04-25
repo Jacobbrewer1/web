@@ -39,20 +39,23 @@ func LoggerWithComponent(l *slog.Logger, component string) *slog.Logger {
 // replaceAttrs is a slog.HandlerOptions.ReplaceAttr function that replaces some attributes.
 func replaceAttrs(groups []string, a slog.Attr) slog.Attr {
 	if a.Key == slog.SourceKey {
+		valueStr := a.Value.String()
+
 		// Cut the source file to a relative path.
-		v := strings.Split(a.Value.String(), "/")
+		v := strings.Split(valueStr, "/")
 		idx := len(v) - 2
 		if idx < 0 {
 			idx = 0
 		}
-		a.Value = slog.StringValue(strings.Join(v[idx:], "/"))
+		valueStr = strings.Join(v[idx:], "/")
 
 		// Remove any curly braces from the source file. This is needed for the logstash parser.
-		a.Value = slog.StringValue(strings.ReplaceAll(valueStr, "{", ""))
-		a.Value = slog.StringValue(strings.ReplaceAll(a.Value.String(), "}", ""))
+		valueStr = strings.ReplaceAll(valueStr, "{", "")
+		valueStr = strings.ReplaceAll(valueStr, "}", "")
 
-		// Is the binary compiled with Bazel? We need to trim the path even more than that. Example of source file at this point:
-		// gazelle~~go_deps~com_github_jacobbrewer1_web/app.go 439 need to be trimmed to web/app.go
+		// Is the binary compiled with Bazel? We need to trim the path even more than that.
+		// Example of source file at this point:
+		// "gazelle~~go_deps~com_github_jacobbrewer1_web/app.go 439" need to be trimmed to web/app.go
 		if strings.Contains(valueStr, bazelGazellePrefix) {
 			v := strings.Split(valueStr, bazelGazellePrefix)
 			if len(v) > 1 {
@@ -71,11 +74,13 @@ func replaceAttrs(groups []string, a slog.Attr) slog.Attr {
 						if len(parts) > 1 {
 							newPath += "/" + strings.Join(parts[1:], "/")
 						}
-						a.Value = slog.StringValue(newPath)
+						valueStr = newPath
 					}
 				}
 			}
 		}
+
+		a.Value = slog.StringValue(valueStr)
 	}
 
 	return a
