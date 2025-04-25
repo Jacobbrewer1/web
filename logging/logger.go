@@ -39,7 +39,6 @@ func LoggerWithComponent(l *slog.Logger, component string) *slog.Logger {
 // replaceAttrs is a slog.HandlerOptions.ReplaceAttr function that replaces some attributes.
 func replaceAttrs(groups []string, a slog.Attr) slog.Attr {
 	if a.Key == slog.SourceKey {
-
 		// Cut the source file to a relative path.
 		v := strings.Split(a.Value.String(), "/")
 		idx := len(v) - 2
