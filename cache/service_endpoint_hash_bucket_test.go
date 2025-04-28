@@ -10,33 +10,37 @@ import (
 	"github.com/serialx/hashring"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 
+	"github.com/jacobbrewer1/web/k8s"
 	"github.com/jacobbrewer1/web/slices"
 )
 
 func Test_Lifecycle(t *testing.T) {
 	t.Parallel()
 
-	ep := &corev1.Endpoints{
+	// Create an EndpointSlice instead of Endpoints
+	endpointSlice := &discoveryv1.EndpointSlice{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-svc",
 			Namespace: "my-ns",
+			Labels: map[string]string{
+				"kubernetes.io/service-name": "my-svc",
+			},
 		},
-		Subsets: []corev1.EndpointSubset{
+		Endpoints: []discoveryv1.Endpoint{
 			{
-				Addresses: []corev1.EndpointAddress{
-					{
-						TargetRef: &corev1.ObjectReference{
-							Name: "a",
-						},
-					},
-					{
-						TargetRef: &corev1.ObjectReference{
-							Name: "b",
-						},
-					},
+				TargetRef: &corev1.ObjectReference{
+					Kind: "Pod",
+					Name: "a",
+				},
+			},
+			{
+				TargetRef: &corev1.ObjectReference{
+					Kind: "Pod",
+					Name: "b",
 				},
 			},
 		},
@@ -46,32 +50,25 @@ func Test_Lifecycle(t *testing.T) {
 	defer cancel()
 
 	l := slog.New(slog.DiscardHandler)
-	k := fake.NewClientset(ep)
+	k := fake.NewClientset(endpointSlice)
 	sb := NewServiceEndpointHashBucket(l, k, "my-svc", "my-ns", "")
 	require.NoError(t, sb.Start(ctx))
 
 	// Check that we can receive an endpoint update after starting.
-	ep.Subsets = append(ep.Subsets, corev1.EndpointSubset{
-		Addresses: []corev1.EndpointAddress{
-			{
-				TargetRef: &corev1.ObjectReference{
-					Name: "c",
-				},
-			},
+	endpointSlice.Endpoints = append(endpointSlice.Endpoints, discoveryv1.Endpoint{
+		TargetRef: &corev1.ObjectReference{
+			Kind: "Pod",
+			Name: "c",
 		},
 	})
-	_, err := k.CoreV1().Endpoints("my-ns").Update(ctx, ep, metav1.UpdateOptions{})
+
+	_, err := k.DiscoveryV1().EndpointSlices("my-ns").Update(ctx, endpointSlice, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
-	require.Eventually(
-		t,
-		func() bool {
-			nodes, ok := sb.hr.GetNodes("", sb.hr.Size())
-			return ok && len(nodes) == 3
-		},
-		5*time.Second,
-		10*time.Millisecond,
-	)
+	require.Eventually(t, func() bool {
+		nodes, ok := sb.hr.GetNodes("", sb.hr.Size())
+		return ok && len(nodes) == 3
+	}, 5*time.Second, 10*time.Millisecond)
 
 	// Check that a key lands in one of three buckets.
 	hits := 0
@@ -104,45 +101,53 @@ func Test_onEndpointUpdate(t *testing.T) {
 			"a",
 			"b",
 		}),
+		appName:      "my-svc",
+		appNamespace: "my-ns",
 	}
 
 	sb.onEndpointUpdate(
-		&corev1.Endpoints{
-			Subsets: []corev1.EndpointSubset{
+		&discoveryv1.EndpointSlice{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-svc",
+				Namespace: "my-ns",
+				Labels: map[string]string{
+					"kubernetes.io/service-name": "my-svc",
+				},
+			},
+			Endpoints: []discoveryv1.Endpoint{
 				{
-					Addresses: []corev1.EndpointAddress{
-						{
-							TargetRef: &corev1.ObjectReference{
-								Name: "a",
-							},
-						},
-						{
-							TargetRef: &corev1.ObjectReference{
-								Name: "b",
-							},
-						},
+					TargetRef: &corev1.ObjectReference{
+						Kind: "Pod",
+						Name: "a",
+					},
+				},
+				{
+					TargetRef: &corev1.ObjectReference{
+						Kind: "Pod",
+						Name: "b",
 					},
 				},
 			},
 		},
-		&corev1.Endpoints{
-			Subsets: []corev1.EndpointSubset{
+		&discoveryv1.EndpointSlice{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-svc",
+				Namespace: "my-ns",
+				Labels: map[string]string{
+					"kubernetes.io/service-name": "my-svc",
+				},
+			},
+			Endpoints: []discoveryv1.Endpoint{
 				{
-					Addresses: []corev1.EndpointAddress{
-						{
-							TargetRef: &corev1.ObjectReference{
-								Name: "b",
-							},
-						},
+					TargetRef: &corev1.ObjectReference{
+						Kind: "Pod",
+						Name: "b",
 					},
 				},
 				{
-					Addresses: []corev1.EndpointAddress{
-						{
-							TargetRef: &corev1.ObjectReference{
-								Name: "c",
-							},
-						},
+					TargetRef: &corev1.ObjectReference{
+						Kind: "Pod",
+						Name: "c",
 					},
 				},
 			},
@@ -151,45 +156,36 @@ func Test_onEndpointUpdate(t *testing.T) {
 
 	nodes, ok := sb.hr.GetNodes("", sb.hr.Size())
 	require.True(t, ok)
-	require.Equal(
-		t,
-		[]string{
-			"b",
-			"c",
-		},
-		nodes,
-	)
+	require.Equal(t, []string{
+		"b",
+		"c",
+	}, nodes)
 }
 
-func Test_endpointsToSet(t *testing.T) {
+func Test_endpointSliceToSet(t *testing.T) {
 	t.Parallel()
 	require.Equal(
 		t,
 		slices.NewSet("a", "b", "c"),
-		endpointsToSet(
-			&corev1.Endpoints{
-				Subsets: []corev1.EndpointSubset{
+		endpointSliceToSet(
+			&discoveryv1.EndpointSlice{
+				Endpoints: []discoveryv1.Endpoint{
 					{
-						Addresses: []corev1.EndpointAddress{
-							{
-								TargetRef: &corev1.ObjectReference{
-									Name: "a",
-								},
-							},
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "a",
 						},
 					},
 					{
-						Addresses: []corev1.EndpointAddress{
-							{
-								TargetRef: &corev1.ObjectReference{
-									Name: "b",
-								},
-							},
-							{
-								TargetRef: &corev1.ObjectReference{
-									Name: "c",
-								},
-							},
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "b",
+						},
+					},
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "c",
 						},
 					},
 				},
@@ -206,7 +202,7 @@ func Test_InBucket_WithoutStart(t *testing.T) {
 		fake.NewClientset(),
 		"my-svc",
 		"my-ns",
-		"pod-1",
+		k8s.PodName(),
 	)
 
 	require.False(t, sb.InBucket("key"), "should not be in bucket before starting")
