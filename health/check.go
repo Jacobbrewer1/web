@@ -105,7 +105,7 @@ func (c *Check) String() string {
 //
 // Parameters:
 //   - ctx: A context.Context object that provides a deadline, cancellation signal, or other request-scoped values.
-//     If nil, a background context is used.
+//     If nil, an error is returned.
 //
 // Behavior:
 //   - Records the current timestamp as the last check time.
@@ -118,7 +118,7 @@ func (c *Check) String() string {
 //   - An error if the health check fails, or nil if it succeeds.
 func (c *Check) Check(ctx context.Context) error {
 	if ctx == nil {
-		ctx = context.Background()
+		return errors.New("context cannot be nil")
 	}
 
 	now := timestamp()
