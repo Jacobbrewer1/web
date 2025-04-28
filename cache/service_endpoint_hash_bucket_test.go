@@ -191,7 +191,7 @@ func Test_InBucket_WithoutStart(t *testing.T) {
 	sb := NewServiceEndpointHashBucket(
 		slog.New(slog.DiscardHandler),
 		fake.NewClientset(),
-		"my-app",
+		"my-app-name",
 		k8s.DeployedNamespace(),
 		k8s.PodName(),
 	)
