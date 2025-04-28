@@ -301,5 +301,5 @@ func TestChecker_AddTest_Invalid_AlreadyExists(t *testing.T) {
 
 	err = c.AddCheck(check)
 	require.Error(t, err)
-	require.Equal(t, "check already exists with the same key: test_check", err.Error())
+	require.Equal(t, "check already exists: test_check", err.Error())
 }

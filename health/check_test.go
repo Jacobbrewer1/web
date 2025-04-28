@@ -289,31 +289,12 @@ func TestCheck_NoParentContext(t *testing.T) {
 	now := time.Now().UTC()
 	timestamp = func() time.Time { return now }
 
-	statusListenerCalled := false
 	c := NewCheck("test", func(ctx context.Context) error {
 		return nil
-	},
-		WithCheckOnStatusChange(func(ctx context.Context, name string, state *State) {
-			statusListenerCalled = true
-			require.Equal(t, "test", name)
-			require.Equal(t, StatusUp, state.status)
-		}),
-	)
+	})
 
 	err := c.Check(nil) // nolint:staticcheck // This is testing that the function works with a nil context
-	require.NoError(t, err)
-
-	expectedState := &State{
-		lastCheckTime:   now,
-		lastSuccess:     now,
-		lastFail:        time.Time{},
-		contiguousFails: atomic.Uint32{},
-		checkErr:        nil,
-		status:          StatusUp,
-	}
-	expectedState.contiguousFails.Store(0)
-	compareState(t, expectedState, c.state)
-	require.True(t, statusListenerCalled)
+	require.EqualError(t, err, "context cannot be nil")
 }
 
 func TestCheck_ErrorGracePeriod(t *testing.T) {
