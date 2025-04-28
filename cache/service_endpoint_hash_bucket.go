@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/serialx/hashring"
-	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -26,7 +26,7 @@ type ServiceEndpointHashBucket struct {
 	mut               *sync.RWMutex
 	hr                *hashring.HashRing
 	l                 *slog.Logger
-	k                 kubernetes.Interface
+	kubeClient        kubernetes.Interface
 	appName           string
 	appNamespace      string
 	thisPod           string
@@ -38,18 +38,16 @@ type ServiceEndpointHashBucket struct {
 func NewServiceEndpointHashBucket(
 	l *slog.Logger,
 	kubeClient kubernetes.Interface,
-	serviceName string,
-	serviceNamespace string,
-	thisPod string,
+	appName, appNamespace, thisPod string,
 ) *ServiceEndpointHashBucket {
 	informerFactory := informers.NewSharedInformerFactory(kubeClient, 10*time.Second)
-	endpointsInformer := informerFactory.Core().V1().Endpoints().Informer()
+	endpointsInformer := informerFactory.Discovery().V1().EndpointSlices().Informer()
 	return &ServiceEndpointHashBucket{
 		mut:               new(sync.RWMutex),
 		l:                 l,
-		k:                 kubeClient,
-		appName:           serviceName,
-		appNamespace:      serviceNamespace,
+		kubeClient:        kubeClient,
+		appName:           appName,
+		appNamespace:      appNamespace,
 		thisPod:           thisPod,
 		informerFactory:   informerFactory,
 		endpointsInformer: endpointsInformer,
@@ -58,12 +56,12 @@ func NewServiceEndpointHashBucket(
 
 // Start starts the hash bucket processing.
 func (sb *ServiceEndpointHashBucket) Start(ctx context.Context) error {
-	currentEndpoints, err := sb.k.CoreV1().Endpoints(sb.appNamespace).Get(ctx, sb.appName, metav1.GetOptions{})
+	endpointSliceList, err := sb.kubeClient.DiscoveryV1().EndpointSlices(sb.appNamespace).Get(ctx, sb.appName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("error getting initial endpoints: %w", err)
 	}
 
-	currentHostSet := endpointsToSet(currentEndpoints)
+	currentHostSet := endpointSliceToSet(endpointSliceList)
 	sb.l.Info("initialising hash ring with hosts", slog.Any(logging.KeyHosts, currentHostSet.Items()))
 
 	sb.mut.Lock()
@@ -96,12 +94,12 @@ func (sb *ServiceEndpointHashBucket) InBucket(key string) bool {
 // onEndpointUpdate is called when a change to an endpoint is made. If the endpoint that has changed is
 // related to this service, the internal hashring is updated to represent the new set of nodes.
 func (sb *ServiceEndpointHashBucket) onEndpointUpdate(oldEndpoints, newEndpoints any) {
-	coreOldEndpoints, ok := oldEndpoints.(*corev1.Endpoints)
+	coreOldEndpoints, ok := oldEndpoints.(*discoveryv1.EndpointSlice)
 	if !ok {
 		return
 	}
 
-	coreNewEndpoints, ok := newEndpoints.(*corev1.Endpoints)
+	coreNewEndpoints, ok := newEndpoints.(*discoveryv1.EndpointSlice)
 	if !ok {
 		return
 	}
@@ -110,8 +108,8 @@ func (sb *ServiceEndpointHashBucket) onEndpointUpdate(oldEndpoints, newEndpoints
 		return
 	}
 
-	a := endpointsToSet(coreOldEndpoints)
-	b := endpointsToSet(coreNewEndpoints)
+	a := endpointSliceToSet(coreOldEndpoints)
+	b := endpointSliceToSet(coreNewEndpoints)
 	removed := a.Difference(b)
 	added := b.Difference(a)
 
@@ -136,18 +134,14 @@ func (sb *ServiceEndpointHashBucket) onEndpointUpdate(oldEndpoints, newEndpoints
 	sb.l.Info("hashring state", slog.Any(logging.KeyState, nodes))
 }
 
-// endpointsToSet converts input endpoints into a Set of IP addresses.
-func endpointsToSet(endpoints *corev1.Endpoints) *slices.Set[string] {
+// endpointSliceToSet converts input endpoint slice into a Set of pod names
+func endpointSliceToSet(endpointSlice *discoveryv1.EndpointSlice) *slices.Set[string] {
 	s := slices.NewSet[string]()
-
-	for _, subset := range endpoints.Subsets {
-		for _, address := range subset.Addresses {
-			if address.TargetRef != nil {
-				s.Add(address.TargetRef.Name)
-			}
+	for _, endpoint := range endpointSlice.Endpoints {
+		if endpoint.TargetRef != nil && endpoint.TargetRef.Kind == "Pod" {
+			s.Add(endpoint.TargetRef.Name)
 		}
 	}
-
 	return s
 }
 

@@ -18,7 +18,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	github.com/vektra/mockery/v2 v2.53.3
-	k8s.io/api v0.32.3
+	k8s.io/api v0.33.0
 	k8s.io/apimachinery v0.33.0
 	k8s.io/client-go v0.32.3
 	k8s.io/klog/v2 v2.130.1
