@@ -386,6 +386,8 @@ func TestApp_WaitUntilStarted(t *testing.T) {
 }
 
 func TestApp_StartAsyncTask(t *testing.T) {
+	t.Parallel()
+
 	t.Run("start_async_task_runs_successfully", func(t *testing.T) {
 		t.Parallel()
 
