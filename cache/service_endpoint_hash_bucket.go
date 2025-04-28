@@ -38,9 +38,7 @@ type ServiceEndpointHashBucket struct {
 func NewServiceEndpointHashBucket(
 	l *slog.Logger,
 	kubeClient kubernetes.Interface,
-	serviceName string,
-	serviceNamespace string,
-	thisPod string,
+	appName, appNamespace, thisPod string,
 ) *ServiceEndpointHashBucket {
 	informerFactory := informers.NewSharedInformerFactory(kubeClient, 10*time.Second)
 	endpointsInformer := informerFactory.Discovery().V1().EndpointSlices().Informer()
@@ -48,8 +46,8 @@ func NewServiceEndpointHashBucket(
 		mut:               new(sync.RWMutex),
 		l:                 l,
 		kubeClient:        kubeClient,
-		appName:           serviceName,
-		appNamespace:      serviceNamespace,
+		appName:           appName,
+		appNamespace:      appNamespace,
 		thisPod:           thisPod,
 		informerFactory:   informerFactory,
 		endpointsInformer: endpointsInformer,

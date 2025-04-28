@@ -24,11 +24,8 @@ func Test_Lifecycle(t *testing.T) {
 	// Create an EndpointSlice instead of Endpoints
 	endpointSlice := &discoveryv1.EndpointSlice{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-svc",
-			Namespace: "my-ns",
-			Labels: map[string]string{
-				"kubernetes.io/service-name": "my-svc",
-			},
+			Name:      "my-app-name",
+			Namespace: k8s.DeployedNamespace(),
 		},
 		Endpoints: []discoveryv1.Endpoint{
 			{
@@ -51,7 +48,7 @@ func Test_Lifecycle(t *testing.T) {
 
 	l := slog.New(slog.DiscardHandler)
 	k := fake.NewClientset(endpointSlice)
-	sb := NewServiceEndpointHashBucket(l, k, "my-svc", "my-ns", "")
+	sb := NewServiceEndpointHashBucket(l, k, "my-app-name", k8s.DeployedNamespace(), k8s.PodName())
 	require.NoError(t, sb.Start(ctx))
 
 	// Check that we can receive an endpoint update after starting.
@@ -62,7 +59,7 @@ func Test_Lifecycle(t *testing.T) {
 		},
 	})
 
-	_, err := k.DiscoveryV1().EndpointSlices("my-ns").Update(ctx, endpointSlice, metav1.UpdateOptions{})
+	_, err := k.DiscoveryV1().EndpointSlices(k8s.DeployedNamespace()).Update(ctx, endpointSlice, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	require.Eventually(t, func() bool {
@@ -101,18 +98,15 @@ func Test_onEndpointUpdate(t *testing.T) {
 			"a",
 			"b",
 		}),
-		appName:      "my-svc",
-		appNamespace: "my-ns",
+		appName:      "my-app-name",
+		appNamespace: k8s.DeployedNamespace(),
 	}
 
 	sb.onEndpointUpdate(
 		&discoveryv1.EndpointSlice{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-svc",
-				Namespace: "my-ns",
-				Labels: map[string]string{
-					"kubernetes.io/service-name": "my-svc",
-				},
+				Name:      "my-app-name",
+				Namespace: k8s.DeployedNamespace(),
 			},
 			Endpoints: []discoveryv1.Endpoint{
 				{
@@ -131,11 +125,8 @@ func Test_onEndpointUpdate(t *testing.T) {
 		},
 		&discoveryv1.EndpointSlice{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-svc",
-				Namespace: "my-ns",
-				Labels: map[string]string{
-					"kubernetes.io/service-name": "my-svc",
-				},
+				Name:      "my-app-name",
+				Namespace: k8s.DeployedNamespace(),
 			},
 			Endpoints: []discoveryv1.Endpoint{
 				{
@@ -200,8 +191,8 @@ func Test_InBucket_WithoutStart(t *testing.T) {
 	sb := NewServiceEndpointHashBucket(
 		slog.New(slog.DiscardHandler),
 		fake.NewClientset(),
-		"my-svc",
-		"my-ns",
+		"my-app",
+		k8s.DeployedNamespace(),
 		k8s.PodName(),
 	)
 
