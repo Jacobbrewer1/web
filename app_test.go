@@ -384,3 +384,50 @@ func TestApp_WaitUntilStarted(t *testing.T) {
 		t.Fatal("second waitUntilStarted call blocked")
 	}
 }
+
+func TestApp_StartAsyncTask(t *testing.T) {
+	t.Parallel()
+
+	t.Run("start_async_task_runs_successfully", func(t *testing.T) {
+		t.Parallel()
+
+		app := newTestApp(t)
+		taskCompleted := make(chan struct{})
+
+		app.startAsyncTask("test-task", false, func(ctx context.Context) {
+			close(taskCompleted)
+		})
+
+		select {
+		case <-taskCompleted:
+			// Success - task completed
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("task did not complete in time")
+		}
+	})
+
+	t.Run("start_async_task_indefinite_ends_unexpectedly_triggers_shutdown", func(t *testing.T) {
+		t.Parallel()
+
+		app := newTestApp(t)
+		shutdownTriggered := make(chan struct{})
+
+		// Override baseCtxCancel to detect shutdown
+		originalCancel := app.baseCtxCancel
+		app.baseCtxCancel = func() {
+			close(shutdownTriggered)
+			originalCancel()
+		}
+
+		app.startAsyncTask("indefinite-task", true, func(ctx context.Context) {
+			// Simulate unexpected end
+		})
+
+		select {
+		case <-shutdownTriggered:
+			// Success - shutdown triggered
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("shutdown was not triggered for indefinite task")
+		}
+	})
+}
