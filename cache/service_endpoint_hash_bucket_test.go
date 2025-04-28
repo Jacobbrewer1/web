@@ -100,6 +100,7 @@ func Test_onEndpointUpdate(t *testing.T) {
 		}),
 		appName:      "my-app-name",
 		appNamespace: k8s.DeployedNamespace(),
+		thisPod:      k8s.PodName(),
 	}
 
 	sb.onEndpointUpdate(
