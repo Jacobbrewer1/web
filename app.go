@@ -143,6 +143,14 @@ type (
 		// Provides read-only access to Secret resources.
 		secretLister listersv1.SecretLister
 
+		// configMapInformer is an informer for Kubernetes ConfigMap objects.
+		// Watches for changes to ConfigMap resources in the cluster.
+		configMapInformer kubeCache.SharedIndexInformer
+
+		// configMapLister is a lister for Kubernetes ConfigMap objects.
+		// Provides read-only access to ConfigMap resources.
+		configMapLister listersv1.ConfigMapLister
+
 		// leaderElection is the leader election for the application.
 		// Manages leader election for distributed systems.
 		leaderElection *leaderelection.LeaderElector
@@ -931,6 +939,42 @@ func (a *App) SecretInformer() kubeCache.SharedIndexInformer {
 		panic("secret informer has not been registered")
 	}
 	return a.secretInformer
+}
+
+// ConfigMapLister returns the config map lister for the application.
+//
+// This function ensures that the config map lister is properly initialized before returning it.
+// If the config map lister is not registered, it logs an error and panics.
+//
+// Returns:
+//   - listersv1.ConfigMapLister: The config map lister instance for the application.
+//
+// Panics:
+//   - If the config map lister has not been registered.
+func (a *App) ConfigMapLister() listersv1.ConfigMapLister {
+	if a.configMapLister == nil {
+		a.l.Error("config map lister has not been registered")
+		panic("config map lister has not been registered")
+	}
+	return a.configMapLister
+}
+
+// ConfigMapInformer returns the config map informer for the application.
+//
+// This function ensures that the config map informer is properly initialized before returning it.
+// If the config map informer is not registered, it logs an error and panics.
+//
+// Returns:
+//   - kubeCache.SharedIndexInformer: The config map informer instance for the application.
+//
+// Panics:
+//   - If the config map informer has not been registered.
+func (a *App) ConfigMapInformer() kubeCache.SharedIndexInformer {
+	if a.configMapInformer == nil {
+		a.l.Error("config map informer has not been registered")
+		panic("config map informer has not been registered")
+	}
+	return a.configMapInformer
 }
 
 // waitUntilStarted blocks until the application has completed its startup sequence.

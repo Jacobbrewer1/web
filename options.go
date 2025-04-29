@@ -720,3 +720,34 @@ func WithKubernetesSecretInformer(informerOptions ...informers.SharedInformerOpt
 		return nil
 	}
 }
+
+// WithKubernetesConfigMapInformer is a StartOption that sets up a Kubernetes ConfigMap informer.
+//
+// This function initializes a Kubernetes SharedInformerFactory and creates an informer
+// for Kubernetes ConfigMap objects. The informer is used to watch and cache ConfigMap resources
+// in the Kubernetes cluster.
+//
+// Parameters:
+//   - informerOptions: A variadic list of SharedInformerOption values to configure the SharedInformerFactory.
+//
+// Returns:
+//   - StartOption: A function that applies the Kubernetes ConfigMap informer setup to the application.
+//
+// Behavior:
+//   - Initializes the Kubernetes SharedInformerFactory with the provided options.
+//   - Creates an informer and lister for Kubernetes ConfigMap objects.
+//   - Logs the creation of the Kubernetes ConfigMap informer.
+//
+// Errors:
+//   - Returns an error if the Kubernetes SharedInformerFactory cannot be initialized.
+func WithKubernetesConfigMapInformer(informerOptions ...informers.SharedInformerOption) StartOption {
+	return func(a *App) error {
+		initKubernetesInformerFactory(a, informerOptions...)
+
+		a.l.Info("creating kubernetes configmap informer")
+		base := a.kubernetesInformerFactory.Core().V1().ConfigMaps()
+		a.configMapInformer = base.Informer()
+		a.configMapLister = base.Lister()
+		return nil
+	}
+}
