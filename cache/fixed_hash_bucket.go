@@ -24,13 +24,6 @@ type FixedHashBucket struct {
 }
 
 // NewFixedHashBucket creates and initializes a new FixedHashBucket with the specified size.
-// It sets up a consistent hashing ring and assigns nodes to it based on the provided size.
-//
-// Parameters:
-//   - size: The number of nodes to add to the hash ring.
-//
-// Returns:
-//   - A pointer to the newly created FixedHashBucket instance.
 func NewFixedHashBucket(size uint) *FixedHashBucket {
 	h := &FixedHashBucket{
 		hr:    hashring.New(make([]string, 0)), // Initialize an empty hash ring.
@@ -46,24 +39,12 @@ func NewFixedHashBucket(size uint) *FixedHashBucket {
 }
 
 // InBucket determines if the given key belongs to the current bucket index.
-//
-// The function uses the consistent hashing ring to find the position of the key
-// and checks if it matches the current bucket index.
-//
-// Parameters:
-//   - key: The key to check, represented as a string.
-//
-// Returns:
-//   - A boolean value indicating whether the key resides in the current bucket.
 func (h *FixedHashBucket) InBucket(key string) bool {
 	pos, _ := h.hr.GetNodePos(key)
 	return pos == h.index
 }
 
 // Advance increments the bucket index to point to the next bucket in the hash ring.
-// If the index exceeds the size of the hash ring, it wraps around to 0.
-//
-// This ensures that the bucket index cycles through all available buckets in a round-robin fashion.
 func (h *FixedHashBucket) Advance() {
 	if h.index+1 >= h.hr.Size() {
 		h.index = 0
