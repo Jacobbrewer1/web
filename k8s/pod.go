@@ -46,15 +46,6 @@ var (
 	//
 	// Kubernetes pods are typically identified by their hostname, which is set to the pod name.
 	// This is accessible via the `os.Hostname()` function or the `HOSTNAME` environment variable.
-	//
-	// This function retrieves the pod name using the following methods, in order:
-	// 1. It attempts to get the hostname of the pod using `os.Hostname()`.
-	// 2. If the hostname retrieval fails, it tries to read the pod name from the
-	//    environment variable `HOSTNAME`.
-	// 3. If both methods fail, it falls back to returning an empty string.
-	//
-	// Returns:
-	//   - string: The name of the pod, or an empty string if it cannot be determined.
 	PodName = sync.OnceValue(func() string {
 		hostname, err := os.Hostname()
 		if err == nil {
@@ -76,9 +67,6 @@ var (
 	// This function retrieves the pod's IP address by reading the value of the
 	// environment variable `POD_IP`. If the environment variable is not set,
 	// it falls back to returning an empty string.
-	//
-	// Returns:
-	//   - string: The IP address of the pod, or an empty string if it cannot be determined.
 	PodIP = sync.OnceValue(func() string {
 		podIP := os.Getenv(envPodIP)
 		if podIP != "" {
@@ -94,9 +82,6 @@ var (
 	// This function retrieves the node name by reading the value of the
 	// environment variable `NODE_NAME`. If the environment variable is not set,
 	// it falls back to returning an empty string.
-	//
-	// Returns:
-	//   - string: The name of the node, or an empty string if it cannot be determined.
 	NodeName = sync.OnceValue(func() string {
 		nodeName := os.Getenv(envNodeName)
 		if nodeName != "" {
@@ -114,9 +99,6 @@ var (
 	// This function reads the namespace from the Kubernetes namespace file stored in
 	// the service account directory. If the file cannot be read (e.g., it does not exist
 	// or is not accessible), the function falls back to returning the default namespace ("default").
-	//
-	// Returns:
-	//   - string: The namespace in which the pod is deployed, or "default" if the file is not found.
 	DeployedNamespace = sync.OnceValue(func() string {
 		got, err := os.ReadFile(kubernetesNamespacePath)
 		if err != nil {
@@ -129,10 +111,6 @@ var (
 	//
 	// This function determines whether the application is running inside a Kubernetes
 	// cluster by checking for the existence of the Kubernetes namespace file.
-	//
-	// Returns:
-	//   - bool: True if the file exists, indicating the application is running inside a cluster;
-	//           false otherwise.
 	IsInCluster = sync.OnceValue(func() bool {
 		_, err := os.Stat(kubernetesNamespacePath)
 		return err == nil
@@ -144,9 +122,6 @@ var (
 	// from the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT`.
 	// If these environment variables are not set, it falls back to using "localhost" as the
 	// host and "443" as the port.
-	//
-	// Returns:
-	//   - string: The full address of the Kubernetes service in the format "host:port".
 	KubernetesService = sync.OnceValue(func() string {
 		host := os.Getenv(envKubernetesHost)
 		if host == "" {
@@ -167,9 +142,6 @@ var (
 	// This function retrieves the service account name by reading the value of the
 	// environment variable `SERVICE_ACCOUNT_NAME`. If the environment variable is not set,
 	// it falls back to returning the default service account name ("default").
-	//
-	// Returns:
-	//   - string: The name of the service account, or "default" if the environment variable is not set.
 	ServiceAccountName = sync.OnceValue(func() string {
 		serviceAccountName := os.Getenv(envServiceAccountName)
 		if serviceAccountName != "" {
@@ -184,9 +156,6 @@ var (
 	// This function reads the service account token from the Kubernetes service account token file.
 	// If the file cannot be read (e.g., it does not exist or is not accessible), the function falls
 	// back to returning an empty string.
-	//
-	// Returns:
-	//   - string: The service account token, or an empty string if the file is not found or not readable.
 	ServiceAccountToken = sync.OnceValue(func() string {
 		got, err := os.ReadFile(kubernetesServiceAccountTokenPath)
 		if err != nil {

@@ -195,12 +195,8 @@ type (
 
 // NewApp creates a new application with the given logger.
 //
-// Parameters:
-//   - l: A pointer to a `slog.Logger` instance used for logging application events.
-//
-// Returns:
-//   - A pointer to an `App` instance if successful.
-//   - An error if the logger is nil or if the application configuration cannot be parsed.
+// Note: This function is thread-safe and ensures that the shutdown process is executed only once,
+// even if called from multiple threads. It blocks all calling threads until the shutdown is complete.
 func NewApp(l *slog.Logger) (*App, error) {
 	if l == nil {
 		return nil, ErrNilLogger
@@ -228,19 +224,6 @@ func NewApp(l *slog.Logger) (*App, error) {
 }
 
 // Start starts the application and applies the given options.
-//
-// This function initializes and starts the application by applying the provided options,
-// setting up metrics, running leader election (if configured), starting HTTP servers,
-// and launching indefinite asynchronous tasks.
-//
-// Note: This function is thread-safe. If the function is called from multiple threads,
-// it will only execute once. However, it will block all calling threads until the startup is complete.
-//
-// Parameters:
-//   - opts: A variadic list of StartOption functions to configure the application.
-//
-// Returns:
-//   - An error if any part of the startup process fails. If an error occurs, the application will be shut down.
 func (a *App) Start(opts ...StartOption) error {
 	var startErr error
 	a.startOnce.Do(func() {
@@ -337,13 +320,6 @@ func (a *App) Start(opts ...StartOption) error {
 }
 
 // startServer starts the given HTTP server and adds it to the application's shutdown wait group.
-//
-// Parameters:
-//   - name: The name of the server, used for logging purposes.
-//   - srv: A pointer to the `http.Server` instance to be started.
-//
-// This function logs the server's status, starts it in a separate goroutine, and ensures
-// graceful shutdown by decrementing the shutdown wait group when the server stops.
 func (a *App) startServer(name string, srv *http.Server) {
 	l := a.l.With(slog.String(logging.KeyServer, name))
 
@@ -364,10 +340,6 @@ func (a *App) startServer(name string, srv *http.Server) {
 //
 // This function is useful for creating a cancellable context that is tied to the lifecycle
 // of the application's base context.
-//
-// Returns:
-//   - context.Context: The newly created child context.
-//   - context.CancelFunc: A function to cancel the child context.
 func (a *App) ChildContext() (context.Context, context.CancelFunc) {
 	return context.WithCancel(a.baseCtx)
 }
@@ -376,24 +348,11 @@ func (a *App) ChildContext() (context.Context, context.CancelFunc) {
 //
 // This function is useful for creating a context that automatically cancels after the given duration,
 // ensuring that operations do not exceed the specified time limit.
-//
-// Parameters:
-//   - timeout: The duration after which the context will be canceled.
-//
-// Returns:
-//   - context.Context: The newly created child context with the specified timeout.
-//   - context.CancelFunc: A function to cancel the child context manually before the timeout.
 func (a *App) TimeoutContext(timeout time.Duration) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(a.baseCtx, timeout)
 }
 
 // WaitForEnd waits for the application to complete, either normally or via an interrupt signal.
-//
-// This function blocks until the application's base context is canceled or done.
-// Once the application ends, it executes any provided callback functions in the `onEnd` parameter.
-//
-// Parameters:
-//   - onEnd: A variadic list of functions to be executed after the application ends.
 func (a *App) WaitForEnd(onEnd ...func()) {
 	<-a.baseCtx.Done()
 
@@ -403,10 +362,6 @@ func (a *App) WaitForEnd(onEnd ...func()) {
 }
 
 // Shutdown gracefully stops the application by performing the following steps:
-// 1. Cancels the base context to signal shutdown to all components.
-// 2. Shuts down all registered HTTP servers.
-// 3. Closes the database connection, Redis pool, and other resources.
-// 4. Waits for all shutdown tasks to complete.
 //
 // Note: This function is thread-safe and ensures that the shutdown process is executed only once,
 // even if called from multiple threads. It blocks all calling threads until the shutdown is complete.
@@ -481,15 +436,6 @@ func (a *App) Shutdown() {
 }
 
 // Logger returns the logger for the application.
-//
-// This function ensures that the application's logger is properly initialized
-// before returning it. If the logger is not registered, it will panic.
-//
-// Returns:
-//   - *slog.Logger: The logger instance for the application.
-//
-// Panics:
-//   - If the logger has not been registered.
 func (a *App) Logger() *slog.Logger {
 	if a.l == nil {
 		panic("logger has not been registered")
@@ -498,15 +444,6 @@ func (a *App) Logger() *slog.Logger {
 }
 
 // VaultClient returns the vault client for the application.
-//
-// This function ensures that the application's vault client is properly initialized
-// before returning it. If the vault client is not registered, it logs an error and panics.
-//
-// Returns:
-//   - vaulty.Client: The vault client instance for the application.
-//
-// Panics:
-//   - If the vault client has not been registered.
 func (a *App) VaultClient() vaulty.Client {
 	if a.vaultClient == nil {
 		a.l.Error("vault client has not been registered")
@@ -516,14 +453,6 @@ func (a *App) VaultClient() vaulty.Client {
 }
 
 // Viper returns the viper instance for the application.
-//
-// This function ensures that the application's viper instance is properly initialized
-// before returning it. If the viper instance is not registered, it logs an error and panics.
-//
-// Returns:
-//   - *viper.Viper: The viper instance for the application.
-//
-// Panics:
 //   - If the viper instance has not been registered.
 func (a *App) Viper() *viper.Viper {
 	if a.vip == nil {
@@ -534,15 +463,6 @@ func (a *App) Viper() *viper.Viper {
 }
 
 // DBConn returns the database connection for the application.
-//
-// This function ensures that the application's database connection is properly initialized
-// before returning it. If the database connection is not registered, it logs an error and panics.
-//
-// Returns:
-//   - *vsql.Database: The database connection for the application.
-//
-// Panics:
-//   - If the database connection has not been registered.
 func (a *App) DBConn() *vsql.Database {
 	if a.db == nil {
 		a.l.Error("database connection has not been registered")
@@ -552,15 +472,6 @@ func (a *App) DBConn() *vsql.Database {
 }
 
 // KubeClient returns the Kubernetes client for the application.
-//
-// This function ensures that the application's Kubernetes client is properly initialized
-// before returning it. If the Kubernetes client is not registered, it logs an error and panics.
-//
-// Returns:
-//   - kubernetes.Interface: The Kubernetes client for the application.
-//
-// Panics:
-//   - If the Kubernetes client has not been registered.
 func (a *App) KubeClient() kubernetes.Interface {
 	if a.kubeClient == nil {
 		a.l.Error("kubernetes client has not been registered")
@@ -570,23 +481,11 @@ func (a *App) KubeClient() kubernetes.Interface {
 }
 
 // Done returns a channel that is closed when the application's base context is done.
-//
-// This function provides a way to listen for the completion or cancellation
-// of the application's base context, which signals the end of the application's lifecycle.
-//
-// Returns:
-//   - <-chan struct{}: A read-only channel that is closed when the application's base context is done.
 func (a *App) Done() <-chan struct{} {
 	return a.baseCtx.Done()
 }
 
 // IsLeader checks if the application is the leader in a distributed system.
-//
-// This function determines the leadership status of the application. If leader election
-// is not configured, it assumes the application is the leader and logs a debug message.
-//
-// Returns:
-//   - bool: True if the application is the leader, false otherwise.
 func (a *App) IsLeader() bool {
 	if a.leaderElection == nil {
 		a.l.Debug("leader election not set, assuming leader")
@@ -596,35 +495,11 @@ func (a *App) IsLeader() bool {
 }
 
 // LeaderChange returns a channel that is notified when the leader changes.
-//
-// This function provides a mechanism to listen for changes in leadership status
-// in a distributed system. The returned channel is closed or notified whenever
-// the application's leadership state changes.
-//
-// Returns:
-//   - <-chan struct{}: A read-only channel that signals leadership changes.
 func (a *App) LeaderChange() <-chan struct{} {
 	return a.leaderChange
 }
 
 // StartServer starts a new server with the given name and http.Server.
-//
-// This function registers and starts an HTTP server for the application.
-// It ensures that the server name is unique and applies default handlers
-// for "not found" and "method not allowed" responses if they are not already set.
-//
-// Parameters:
-//   - name: A string representing the name of the server.
-//   - srv: A pointer to an `http.Server` instance to be started.
-//
-// Returns:
-//   - error: An error if the server with the given name already exists.
-//
-// Behavior:
-//   - If a server with the same name is already registered, it returns an error.
-//   - If the server handler is a Gorilla Mux router, it ensures that default
-//     "not found" and "method not allowed" handlers are applied if not set.
-//   - The server is stored in the application's server map and started.
 func (a *App) StartServer(name string, srv *http.Server) error {
 	if _, found := a.servers.Load(name); found {
 		return fmt.Errorf("server %s already exists", name)
@@ -648,22 +523,6 @@ func (a *App) StartServer(name string, srv *http.Server) error {
 }
 
 // startAsyncTask starts an asynchronous task with the given name and function.
-//
-// This function launches a goroutine to execute the provided task function. If the task
-// is marked as indefinite, it is expected to run until the application shuts down. If
-// an indefinite task ends unexpectedly, the application shutdown is triggered.
-//
-// Parameters:
-//   - name: A string representing the name of the task, used for logging purposes.
-//   - indefinite: A boolean indicating whether the task is expected to run indefinitely.
-//   - fn: An AsyncTaskFunc representing the task function to be executed.
-//
-// Behavior:
-//   - Logs the start of the task.
-//   - Adds the task to the application's shutdown wait group.
-//   - Executes the task function in a separate goroutine.
-//   - If the task is indefinite and ends unexpectedly (without context cancellation),
-//     it logs an error and triggers application shutdown.
 func (a *App) startAsyncTask(name string, indefinite bool, fn AsyncTaskFunc) {
 	a.l.Info("starting async task", slog.String(logging.KeyName, name))
 	a.shutdownWg.Add(1)
@@ -683,15 +542,6 @@ func (a *App) startAsyncTask(name string, indefinite bool, fn AsyncTaskFunc) {
 }
 
 // RedisPool returns the Redis connection pool for the application.
-//
-// This function ensures that the Redis pool is properly initialized before returning it.
-// If the Redis pool is not registered, it logs an error and panics.
-//
-// Returns:
-//   - goredis.Pool: The Redis connection pool for the application.
-//
-// Panics:
-//   - If the Redis pool has not been registered.
 func (a *App) RedisPool() goredis.Pool {
 	if a.redisPool == nil {
 		a.l.Error("redis pool has not been registered")
@@ -701,15 +551,6 @@ func (a *App) RedisPool() goredis.Pool {
 }
 
 // WorkerPool returns the worker pool for the application.
-//
-// This function ensures that the worker pool is properly initialized before returning it.
-// If the worker pool is not registered, it logs an error and panics.
-//
-// Returns:
-//   - workerpool.Pool: The worker pool for the application.
-//
-// Panics:
-//   - If the worker pool has not been registered.
 func (a *App) WorkerPool() workerpool.Pool {
 	if a.workerPool == nil {
 		a.l.Error("worker pool has not been registered")
@@ -719,15 +560,6 @@ func (a *App) WorkerPool() workerpool.Pool {
 }
 
 // NatsClient returns the NATS client for the application.
-//
-// This function ensures that the NATS client is properly initialized before returning it.
-// If the NATS client is not registered, it logs an error and panics.
-//
-// Returns:
-//   - *nats.Conn: The NATS client for the application.
-//
-// Panics:
-//   - If the NATS client has not been registered.
 func (a *App) NatsClient() *nats.Conn {
 	if a.natsClient == nil {
 		a.l.Error("nats client has not been registered")
@@ -737,15 +569,6 @@ func (a *App) NatsClient() *nats.Conn {
 }
 
 // NatsJetStream returns the JetStream instance for the application.
-//
-// This function ensures that the JetStream instance is properly initialized before returning it.
-// If the JetStream instance is not registered, it logs an error and panics.
-//
-// Returns:
-//   - jetstream.JetStream: The JetStream instance for the application.
-//
-// Panics:
-//   - If the JetStream instance has not been registered.
 func (a *App) NatsJetStream() jetstream.JetStream {
 	if a.natsJetStream == nil {
 		a.l.Error("nats jetstream has not been registered")
@@ -755,15 +578,6 @@ func (a *App) NatsJetStream() jetstream.JetStream {
 }
 
 // NatsStream returns the NATS stream for the application.
-//
-// This function ensures that the NATS stream is properly initialized before returning it.
-// If the NATS stream is not registered, it logs an error and panics.
-//
-// Returns:
-//   - jetstream.Stream: The NATS stream for the application.
-//
-// Panics:
-//   - If the NATS stream has not been registered.
 func (a *App) NatsStream() jetstream.Stream {
 	if a.natsStream == nil {
 		a.l.Error("nats stream has not been registered")
@@ -775,21 +589,7 @@ func (a *App) NatsStream() jetstream.Stream {
 // CreateNatsJetStreamConsumer creates a new JetStream consumer with the specified name and subject filter.
 //
 // This function ensures that the NATS stream is properly initialized before attempting to create or update
-// a JetStream consumer. If the NATS stream is not registered, it returns an error.
-//
-// Parameters:
-//   - consumerName: A string representing the durable name of the consumer. This ensures state retention.
-//   - subjectFilter: A string representing the subject filter for the consumer. Only messages matching this
-//     subject will be delivered to the consumer.
-//
-// Returns:
-//   - jetstream.Consumer: The created or updated JetStream consumer instance.
-//   - error: An error if the NATS stream is not registered or if the consumer creation fails.
-//
-// Behavior:
-//   - If the NATS stream is nil, it returns an error indicating that the stream is not registered.
-//   - Creates or updates a JetStream consumer with the provided configuration, including durable name,
-//     explicit acknowledgment policy, subject filter, and delivery policy.
+// a JetStream consumer.
 //
 // Example:
 //
@@ -816,15 +616,6 @@ func (a *App) CreateNatsJetStreamConsumer(consumerName, subjectFilter string) (j
 }
 
 // FixedHashBucket returns the fixed hash bucket for the application.
-//
-// This function ensures that the fixed hash bucket is properly initialized before returning it.
-// If the fixed hash bucket is not registered, it logs an error and panics.
-//
-// Returns:
-//   - *cache.FixedHashBucket: The fixed hash bucket instance for the application.
-//
-// Panics:
-//   - If the fixed hash bucket has not been registered.
 func (a *App) FixedHashBucket() *cache.FixedHashBucket {
 	if a.fixedHashBucket == nil {
 		a.l.Error("fixed hash bucket has not been registered")
@@ -834,15 +625,6 @@ func (a *App) FixedHashBucket() *cache.FixedHashBucket {
 }
 
 // ServiceEndpointHashBucket returns the service endpoint hash bucket for the application.
-//
-// This function ensures that the service endpoint hash bucket is properly initialized before returning it.
-// If the service endpoint hash bucket is not registered, it logs an error and panics.
-//
-// Returns:
-//   - *cache.ServiceEndpointHashBucket: The service endpoint hash bucket instance for the application.
-//
-// Panics:
-//   - If the service endpoint hash bucket has not been registered.
 func (a *App) ServiceEndpointHashBucket() *cache.ServiceEndpointHashBucket {
 	if a.serviceEndpointHashBucket == nil {
 		a.l.Error("service endpoint hash bucket has not been registered")
@@ -852,15 +634,6 @@ func (a *App) ServiceEndpointHashBucket() *cache.ServiceEndpointHashBucket {
 }
 
 // PodLister returns the pod lister for the application.
-//
-// This function ensures that the pod lister is properly initialized before returning it.
-// If the pod lister is not registered, it logs an error and panics.
-//
-// Returns:
-//   - listersv1.PodLister: The pod lister instance for the application.
-//
-// Panics:
-//   - If the pod lister has not been registered.
 func (a *App) PodLister() listersv1.PodLister {
 	if a.podLister == nil {
 		a.l.Error("pod lister has not been registered")
@@ -870,15 +643,6 @@ func (a *App) PodLister() listersv1.PodLister {
 }
 
 // PodInformer returns the pod informer for the application.
-//
-// This function ensures that the pod informer is properly initialized before returning it.
-// If the pod informer is not registered, it logs an error and panics.
-//
-// Returns:
-//   - kubeCache.SharedIndexInformer: The pod informer instance for the application.
-//
-// Panics:
-//   - If the pod informer has not been registered.
 func (a *App) PodInformer() kubeCache.SharedIndexInformer {
 	if a.podInformer == nil {
 		a.l.Error("pod informer has not been registered")
@@ -888,15 +652,6 @@ func (a *App) PodInformer() kubeCache.SharedIndexInformer {
 }
 
 // KubernetesInformerFactory returns the Kubernetes informer factory for the application.
-//
-// This function ensures that the Kubernetes informer factory is properly initialized before returning it.
-// If the Kubernetes informer factory is not registered, it logs an error and panics.
-//
-// Returns:
-//   - informers.SharedInformerFactory: The Kubernetes informer factory instance for the application.
-//
-// Panics:
-//   - If the Kubernetes informer factory has not been registered.
 func (a *App) KubernetesInformerFactory() informers.SharedInformerFactory {
 	if a.kubernetesInformerFactory == nil {
 		a.l.Error("kubernetes informer factory has not been registered")
@@ -906,15 +661,6 @@ func (a *App) KubernetesInformerFactory() informers.SharedInformerFactory {
 }
 
 // SecretLister returns the secret lister for the application.
-//
-// This function ensures that the secret lister is properly initialized before returning it.
-// If the secret lister is not registered, it logs an error and panics.
-//
-// Returns:
-//   - listersv1.SecretLister: The secret lister instance for the application.
-//
-// Panics:
-//   - If the secret lister has not been registered.
 func (a *App) SecretLister() listersv1.SecretLister {
 	if a.secretLister == nil {
 		a.l.Error("secret lister has not been registered")
@@ -924,15 +670,6 @@ func (a *App) SecretLister() listersv1.SecretLister {
 }
 
 // SecretInformer returns the secret informer for the application.
-//
-// This function ensures that the secret informer is properly initialized before returning it.
-// If the secret informer is not registered, it logs an error and panics.
-//
-// Returns:
-//   - kubeCache.SharedIndexInformer: The secret informer instance for the application.
-//
-// Panics:
-//   - If the secret informer has not been registered.
 func (a *App) SecretInformer() kubeCache.SharedIndexInformer {
 	if a.secretInformer == nil {
 		a.l.Error("secret informer has not been registered")
@@ -942,15 +679,6 @@ func (a *App) SecretInformer() kubeCache.SharedIndexInformer {
 }
 
 // ConfigMapLister returns the config map lister for the application.
-//
-// This function ensures that the config map lister is properly initialized before returning it.
-// If the config map lister is not registered, it logs an error and panics.
-//
-// Returns:
-//   - listersv1.ConfigMapLister: The config map lister instance for the application.
-//
-// Panics:
-//   - If the config map lister has not been registered.
 func (a *App) ConfigMapLister() listersv1.ConfigMapLister {
 	if a.configMapLister == nil {
 		a.l.Error("config map lister has not been registered")
@@ -960,15 +688,6 @@ func (a *App) ConfigMapLister() listersv1.ConfigMapLister {
 }
 
 // ConfigMapInformer returns the config map informer for the application.
-//
-// This function ensures that the config map informer is properly initialized before returning it.
-// If the config map informer is not registered, it logs an error and panics.
-//
-// Returns:
-//   - kubeCache.SharedIndexInformer: The config map informer instance for the application.
-//
-// Panics:
-//   - If the config map informer has not been registered.
 func (a *App) ConfigMapInformer() kubeCache.SharedIndexInformer {
 	if a.configMapInformer == nil {
 		a.l.Error("config map informer has not been registered")
@@ -978,14 +697,6 @@ func (a *App) ConfigMapInformer() kubeCache.SharedIndexInformer {
 }
 
 // waitUntilStarted blocks until the application has completed its startup sequence.
-//
-// This function ensures that the application has fully started before proceeding.
-// It waits for the `isStartedChan` channel to be closed, which signals the completion
-// of the startup process. If the `isStartedChan` channel is not initialized, it logs
-// an error and panics.
-//
-// Panics:
-//   - If `isStartedChan` is nil, indicating that the channel has not been properly initialized.
 func (a *App) waitUntilStarted() {
 	if a.isStartedChan == nil {
 		a.l.Error("isStartedChan has not been registered")
