@@ -21,7 +21,6 @@ func (Test) Unit() error {
 	args := []string{
 		"test",
 		"--platforms", "@io_bazel_rules_go//go/toolchain:linux_amd64",
-		"--build_tag_filters=-oci",
 	}
 
 	args = append(args, "//...")
@@ -34,6 +33,37 @@ func (Test) Unit() error {
 	return nil
 }
 
+func (Test) Bench() error {
+	mg.Deps(Init)
+	got, err := benchmark()
+	if err != nil {
+		return fmt.Errorf("error running benchmarks: %w", err)
+	}
+
+	fmt.Println(got)
+	return nil
+}
+
+func benchmark() (string, error) {
+	mg.Deps(Init)
+	log(slog.LevelInfo, "Running benchmarks")
+
+	args := []string{
+		"test",
+		"--test_arg=-bench=.",
+		"--test_arg=-run=^$",
+	}
+
+	args = append(args, "//...")
+
+	got, err := sh.Output("bazel", args...)
+	if err != nil {
+		return "", fmt.Errorf("error running benchmarks: %w", err)
+	}
+
+	return got, nil
+}
+
 type Coverage mg.Namespace
 
 // Run runs unit tests for the repository with code coverage enabled.
@@ -43,7 +73,6 @@ func (Coverage) Run() error {
 
 	args := []string{"coverage",
 		"--platforms", "@io_bazel_rules_go//go/toolchain:linux_" + hostArch(),
-		"--build_tag_filters=-oci",
 		"//...",
 	}
 
