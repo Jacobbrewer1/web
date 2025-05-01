@@ -20,7 +20,6 @@ func (Test) Unit() error {
 
 	args := []string{
 		"test",
-		"--platforms", "@io_bazel_rules_go//go/toolchain:linux_amd64",
 	}
 
 	args = append(args, "//...")
@@ -71,8 +70,8 @@ func (Coverage) Run() error {
 	mg.Deps(Init)
 	log(slog.LevelInfo, "Running unit tests with coverage")
 
-	args := []string{"coverage",
-		"--platforms", "@io_bazel_rules_go//go/toolchain:linux_" + hostArch(),
+	args := []string{
+		"coverage",
 		"//...",
 	}
 

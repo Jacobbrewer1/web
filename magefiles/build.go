@@ -22,7 +22,6 @@ func (b Build) All() error {
 
 	args := []string{
 		"build",
-		"--platforms", "@io_bazel_rules_go//go/toolchain:linux_" + hostArch(),
 		"//...",
 	}
 
@@ -43,7 +42,6 @@ func (b Build) One(service string) error {
 
 	args := []string{
 		"build",
-		"--platforms", "@io_bazel_rules_go//go/toolchain:linux_" + hostArch(),
 		"//cmd/" + service,
 	}
 

@@ -28,7 +28,6 @@ func (Generate) mock(shouldVendor bool) error {
 
 	args := []string{
 		"run",
-		"--platforms", fmt.Sprintf("@io_bazel_rules_go//go/toolchain:linux_%s", hostArch()),
 		"//:gen_mock",
 	}
 
