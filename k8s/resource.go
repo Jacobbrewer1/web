@@ -47,6 +47,8 @@ func UpsertResource(ctx context.Context, kubeClient kubernetes.Interface, resour
 	switch v := resource.(type) {
 	case *corev1.ConfigMap:
 		return upsert(ctx, kubeClient.CoreV1().ConfigMaps(resource.GetNamespace()), v)
+	case *corev1.Secret:
+		return upsert(ctx, kubeClient.CoreV1().Secrets(resource.GetNamespace()), v)
 	default:
 		return fmt.Errorf("unsupported resource type: %T", resource)
 	}
@@ -60,6 +62,7 @@ func upsert[U Upserter[T], T UpsertableResource](ctx context.Context, upserter U
 			return fmt.Errorf("failed to get %T: %w", obj, err)
 		}
 
+		obj.SetResourceVersion("") // Reset resource version for creation
 		if _, err := upserter.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
 			return fmt.Errorf("failed to create %T: %w", obj, err)
 		}
