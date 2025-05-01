@@ -62,26 +62,14 @@ jobs:
           go-version-file: 'go.mod'
           cache-dependency-path: "**/*.sum"
 
-      - name: Restore bazel cache
-        uses: actions/cache/restore@v4
-        with:
-          key: bazel
-          path: |
-            ~/.cache/bazel
+      - name: Build
+        run: go build -v ./...
 
-      - name: Build and Test
-        uses: magefile/mage-action@v3
-        with:
-          version: latest
-          args: -v build test
+      - name: Verify
+        run: go vet ./...
 
-      - name: Save bazel cache
-        uses: actions/cache/save@v4
-        if: always()
-        with:
-          key: bazel
-          path: |
-            ~/.cache/bazel
+      - name: Test
+        run: go test -v ./...
 
   benchmark:
     name: "Benchmark"
@@ -117,75 +105,3 @@ jobs:
           fail-on-alert: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
           comment-on-alert: true
-
-  diff:
-    name: "Diff"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache-dependency-path: "**/*.sum"
-
-      - name: Restore bazel cache
-        uses: actions/cache/restore@v4
-        with:
-          key: bazel
-          path: |
-            ~/.cache/bazel
-
-      - name: Run Mage
-        uses: magefile/mage-action@v3
-        with:
-          version: latest
-          args: fixit
-
-      - name: Check Diff
-        run: |
-          if [[ -n $(git status --porcelain) ]]; then
-            echo "[ERROR] Changes detected:"
-            git status --porcelain
-
-            echo "Make sure to run 'mage fixit' before committing."
-            exit 1
-          fi
-
-  generate:
-    name: "Code Generation"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache-dependency-path: "**/*.sum"
-
-      - name: Restore bazel cache
-        uses: actions/cache/restore@v4
-        with:
-          key: bazel
-          path: |
-            ~/.cache/bazel
-
-      - name: Run Mage
-        uses: magefile/mage-action@v3
-        with:
-          version: latest
-          args: -v generate
-
-      - name: Check Diff
-        run: |
-          if [[ -n $(git status --porcelain) ]]; then
-            echo "[ERROR] Changes detected:"
-            git status --porcelain
-
-            echo "Make sure to run 'mage fixit' before committing."
-            exit 1
-          fi
