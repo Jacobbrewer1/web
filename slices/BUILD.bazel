@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "slices",
+    srcs = ["set.go"],
+    importpath = "github.com/jacobbrewer1/web/slices",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "slices_test",
+    srcs = ["set_test.go"],
+    embed = [":slices"],
+    deps = ["@com_github_stretchr_testify//require"],
+)
