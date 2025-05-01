@@ -1,0 +1,32 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "health",
+    srcs = [
+        "check.go",
+        "check_options.go",
+        "checker.go",
+        "checker_options.go",
+        "errors.go",
+        "result.go",
+        "state.go",
+        "status.go",
+        "time.go",
+    ],
+    importpath = "github.com/jacobbrewer1/web/health",
+    visibility = ["//visibility:public"],
+    deps = ["//logging"],
+)
+
+go_test(
+    name = "health_test",
+    srcs = [
+        "check_test.go",
+        "checker_test.go",
+        "result_test.go",
+        "state_test.go",
+        "status_test.go",
+    ],
+    embed = [":health"],
+    deps = ["@com_github_stretchr_testify//require"],
+)

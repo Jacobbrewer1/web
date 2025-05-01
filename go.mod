@@ -1,6 +1,7 @@
 module github.com/jacobbrewer1/web
 
-go 1.24
+go 1.24.0
+
 toolchain go1.24.1
 
 require (
@@ -12,12 +13,14 @@ require (
 	github.com/jacobbrewer1/uhttp v0.0.12
 	github.com/jacobbrewer1/vaulty v0.1.15-0.20250422083501-a48cb7ba777e
 	github.com/jacobbrewer1/workerpool v0.0.4
+	github.com/magefile/mage v1.15.0
 	github.com/nats-io/nats.go v1.41.2
 	github.com/prometheus/client_golang v1.22.0
 	github.com/serialx/hashring v0.0.0-20200727003509-22c0c7ab6b1b
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	github.com/vektra/mockery/v2 v2.53.3
+	go.uber.org/mock v0.4.0
 	k8s.io/api v0.33.0
 	k8s.io/apimachinery v0.33.0
 	k8s.io/client-go v0.33.0
