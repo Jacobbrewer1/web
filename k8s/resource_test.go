@@ -78,7 +78,7 @@ func TestUpsertResource_UnsupportedResource(t *testing.T) {
 func TestUpsert_Create(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ConfigMap", func(t *testing.T) {
+	t.Run("configmap", func(t *testing.T) {
 		t.Parallel()
 
 		kubeClient := fake.NewClientset()
@@ -100,7 +100,7 @@ func TestUpsert_Create(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Secret", func(t *testing.T) {
+	t.Run("secret", func(t *testing.T) {
 		t.Parallel()
 
 		kubeClient := fake.NewClientset()
@@ -146,7 +146,7 @@ func TestUpsert_Update(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Secret", func(t *testing.T) {
+	t.Run("secret", func(t *testing.T) {
 		t.Parallel()
 
 		kubeClient := fake.NewClientset()
@@ -170,7 +170,7 @@ func TestUpsert_Update(t *testing.T) {
 func TestUpsert_GetError(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ConfigMap", func(t *testing.T) {
+	t.Run("configmap", func(t *testing.T) {
 		t.Parallel()
 
 		kubeClient := fake.NewClientset()
@@ -193,7 +193,7 @@ func TestUpsert_GetError(t *testing.T) {
 		require.Equal(t, "failed to get *v1.ConfigMap: get error", err.Error())
 	})
 
-	t.Run("Secret", func(t *testing.T) {
+	t.Run("secret", func(t *testing.T) {
 		t.Parallel()
 
 		kubeClient := fake.NewClientset()
@@ -220,7 +220,7 @@ func TestUpsert_GetError(t *testing.T) {
 func TestUpsert_CreateError(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ConfigMap", func(t *testing.T) {
+	t.Run("configmap", func(t *testing.T) {
 		t.Parallel()
 
 		kubeClient := fake.NewClientset()
@@ -247,7 +247,7 @@ func TestUpsert_CreateError(t *testing.T) {
 		require.Equal(t, "failed to create *v1.ConfigMap: create error", err.Error())
 	})
 
-	t.Run("Secret", func(t *testing.T) {
+	t.Run("secret", func(t *testing.T) {
 		t.Parallel()
 
 		kubeClient := fake.NewClientset()
@@ -278,7 +278,7 @@ func TestUpsert_CreateError(t *testing.T) {
 func TestUpsert_UpdateError(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ConfigMap", func(t *testing.T) {
+	t.Run("configmap", func(t *testing.T) {
 		t.Parallel()
 
 		kubeClient := fake.NewClientset()
@@ -303,7 +303,7 @@ func TestUpsert_UpdateError(t *testing.T) {
 		require.Equal(t, "failed to update *v1.ConfigMap: update error", err.Error())
 	})
 
-	t.Run("Secret", func(t *testing.T) {
+	t.Run("secret", func(t *testing.T) {
 		t.Parallel()
 
 		kubeClient := fake.NewClientset()

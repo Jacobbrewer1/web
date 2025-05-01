@@ -48,7 +48,7 @@ func UpsertResource(ctx context.Context, kubeClient kubernetes.Interface, resour
 	case *corev1.ConfigMap:
 		return upsert(ctx, kubeClient.CoreV1().ConfigMaps(resource.GetNamespace()), v)
 	case *corev1.Secret:
-		return upsert(ctx, kubeClient.CoreV1().Secrets(v.Namespace), v)
+		return upsert(ctx, kubeClient.CoreV1().Secrets(resource.GetNamespace()), v)
 	default:
 		return fmt.Errorf("unsupported resource type: %T", resource)
 	}
