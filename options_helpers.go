@@ -9,7 +9,7 @@ import (
 // initKubernetesInformerFactory initializes the Kubernetes SharedInformerFactory if it is not already initialized.
 //
 // This function sets up a SharedInformerFactory for the application using the provided Kubernetes client
-// and informer options. The factory is used to manage and cache Kubernetes objects.
+// and informer options.
 func initKubernetesInformerFactory(a *App, informerOptions ...informers.SharedInformerOption) {
 	// Set up an informer factory if one does not exist.
 	if a.kubernetesInformerFactory != nil {

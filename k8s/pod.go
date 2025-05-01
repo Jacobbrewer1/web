@@ -9,15 +9,12 @@ import (
 
 const (
 	// kubernetesServiceAccountPath specifies the file path to the Kubernetes service account directory.
-	// This directory contains files related to the service account, such as the namespace and token.
 	kubernetesServiceAccountPath = "/var/run/secrets/kubernetes.io/serviceaccount"
 
 	// kubernetesNamespacePath specifies the file path to the Kubernetes namespace file.
-	// This file contains the namespace in which the pod is running.
 	kubernetesNamespacePath = kubernetesServiceAccountPath + "/namespace"
 
 	// kubernetesServiceAccountTokenPath specifies the file path to the Kubernetes service account token file.
-	// This file contains the token used by the service account for authentication.
 	kubernetesServiceAccountTokenPath = kubernetesServiceAccountPath + "/token"
 )
 
@@ -67,6 +64,9 @@ var (
 	// This function retrieves the pod's IP address by reading the value of the
 	// environment variable `POD_IP`. If the environment variable is not set,
 	// it falls back to returning an empty string.
+	//
+	// Note: The `POD_IP` environment variable is not a standard Kubernetes
+	// environment variable. This can be set using the downward API in the pod spec.
 	PodIP = sync.OnceValue(func() string {
 		podIP := os.Getenv(envPodIP)
 		if podIP != "" {
@@ -82,6 +82,9 @@ var (
 	// This function retrieves the node name by reading the value of the
 	// environment variable `NODE_NAME`. If the environment variable is not set,
 	// it falls back to returning an empty string.
+	//
+	// Note: The `NODE_NAME` environment variable is not a standard Kubernetes
+	// environment variable. This can be set using the downward API in the pod spec.
 	NodeName = sync.OnceValue(func() string {
 		nodeName := os.Getenv(envNodeName)
 		if nodeName != "" {
@@ -120,8 +123,6 @@ var (
 	//
 	// This function constructs the Kubernetes service address by reading the host and port
 	// from the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT`.
-	// If these environment variables are not set, it falls back to using "localhost" as the
-	// host and "443" as the port.
 	KubernetesService = sync.OnceValue(func() string {
 		host := os.Getenv(envKubernetesHost)
 		if host == "" {
@@ -140,8 +141,10 @@ var (
 	// ServiceAccountName returns the name of the service account used by the pod.
 	//
 	// This function retrieves the service account name by reading the value of the
-	// environment variable `SERVICE_ACCOUNT_NAME`. If the environment variable is not set,
-	// it falls back to returning the default service account name ("default").
+	// environment variable `SERVICE_ACCOUNT_NAME`.
+	//
+	// Note: The `SERVICE_ACCOUNT_NAME` environment variable is not a standard Kubernetes
+	// environment variable. This can be set using the downward API in the pod spec.
 	ServiceAccountName = sync.OnceValue(func() string {
 		serviceAccountName := os.Getenv(envServiceAccountName)
 		if serviceAccountName != "" {

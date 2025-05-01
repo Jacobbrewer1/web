@@ -299,8 +299,7 @@ func WithWorkerPool() StartOption {
 
 // WithDependencyBootstrap is a StartOption that bootstraps application dependencies.
 //
-// This function allows the custom dependency bootstrapping, which
-// is executed during the application startup process.
+// This function allows the custom dependency bootstrapping, which is executed during the application startup process.
 func WithDependencyBootstrap(fn func(ctx context.Context) error) StartOption {
 	return func(a *App) error {
 		return fn(a.baseCtx)

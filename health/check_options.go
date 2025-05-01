@@ -21,16 +21,14 @@ func WithNoCheckTimeout() CheckOption {
 	return WithCheckTimeout(0)
 }
 
-// WithCheckErrorGracePeriod sets the maximum duration a check can remain in an error state
-// before it is marked as down.
+// WithCheckErrorGracePeriod sets the maximum duration a check can remain in an error state before it is marked as down.
 func WithCheckErrorGracePeriod(errorGracePeriod time.Duration) CheckOption {
 	return func(c *Check) {
 		c.errorGracePeriod = errorGracePeriod
 	}
 }
 
-// WithCheckMaxFailures sets the maximum number of consecutive failures allowed
-// before the check is marked as down.
+// WithCheckMaxFailures sets the maximum number of consecutive failures allowed before the check is marked as down.
 func WithCheckMaxFailures(maxContiguousFails uint32) CheckOption {
 	return func(c *Check) {
 		c.maxContiguousFails = maxContiguousFails

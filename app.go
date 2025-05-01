@@ -49,18 +49,14 @@ var (
 )
 
 var (
-	// ErrNilLogger is an error that indicates a nil logger was provided to the NewApp function.
-	// This error is returned to prevent the application from starting without a valid logger.
+	// ErrNilLogger is an error that indicates a nil logger was provided.
 	ErrNilLogger = errors.New("logger is nil")
 )
 
 type (
 	// AppConfig is the configuration for the application.
-	// It holds the settings required to initialize and run the application.
 	AppConfig struct {
 		// ConfigLocation specifies the file path to the application's configuration file.
-		// This value can be set via the CONFIG_LOCATION environment variable.
-		// If not provided, it defaults to "config.json".
 		ConfigLocation string `env:"CONFIG_LOCATION" envDefault:"config.json"`
 	}
 
@@ -68,135 +64,101 @@ type (
 	// It contains all the components and configurations required to run the application.
 	App struct {
 		// l is the logger for the application.
-		// Used for logging application events and errors.
 		l *slog.Logger
 
 		// baseCtx is the base context for the application.
-		// It serves as the root context for all operations within the application.
 		baseCtx context.Context
 
 		// baseCtxCancel is the base context cancel function.
-		// Used to cancel the base context and signal shutdown.
 		baseCtxCancel context.CancelFunc
 
 		// baseCfg is the base configuration for the application.
-		// Holds the application's configuration settings.
 		baseCfg *AppConfig
 
 		// isStartedChan is a channel that is closed when the application is started.
-		// Used to signal that the application has completed its startup process.
 		isStartedChan chan struct{}
 
 		// startOnce ensures that the start function is only called once.
-		// Provides thread-safety for the application's startup process.
 		startOnce sync.Once
 
 		// vip is the viper instance for the application.
-		// Used for managing configuration settings.
 		vip *viper.Viper
 
 		// vaultClient is the vault client for the application.
-		// Provides secure access to secrets and sensitive data.
 		vaultClient vaulty.Client
 
 		// metricsEnabled is a flag to enable metrics for the application.
-		// When true, metrics collection is enabled.
 		metricsEnabled bool
 
 		// servers is the list of servers for the application.
-		// Stores the HTTP servers managed by the application.
 		servers sync.Map
 
 		// shutdownOnce ensures that the shutdown function is only called once.
-		// Provides thread-safety for the application's shutdown process.
 		shutdownOnce sync.Once
 
 		// shutdownWg is used to wait for all shutdown tasks to complete.
-		// Ensures graceful shutdown of the application.
 		shutdownWg *sync.WaitGroup
 
 		// db is the database for the application.
-		// Represents the application's database connection.
 		db *vsql.Database
 
 		// kubeClient interacts with the Kubernetes API server.
-		// Used for managing Kubernetes resources.
 		kubeClient kubernetes.Interface
 
 		// kubernetesInformerFactory is a factory used for initializing a pod informer.
-		// Provides shared informers for Kubernetes resources.
 		kubernetesInformerFactory informers.SharedInformerFactory
 
 		// podInformer is an informer for Kubernetes Pod objects.
-		// Watches for changes to Pod resources in the cluster.
 		podInformer kubeCache.SharedIndexInformer
 
 		// podLister is a lister for Kubernetes Pod objects.
-		// Provides read-only access to Pod resources.
 		podLister listersv1.PodLister
 
 		// secretInformer is an informer for Kubernetes Secret objects.
-		// Watches for changes to Secret resources in the cluster.
 		secretInformer kubeCache.SharedIndexInformer
 
 		// secretLister is a lister for Kubernetes Secret objects.
-		// Provides read-only access to Secret resources.
 		secretLister listersv1.SecretLister
 
 		// configMapInformer is an informer for Kubernetes ConfigMap objects.
-		// Watches for changes to ConfigMap resources in the cluster.
 		configMapInformer kubeCache.SharedIndexInformer
 
 		// configMapLister is a lister for Kubernetes ConfigMap objects.
-		// Provides read-only access to ConfigMap resources.
 		configMapLister listersv1.ConfigMapLister
 
 		// leaderElection is the leader election for the application.
-		// Manages leader election for distributed systems.
 		leaderElection *leaderelection.LeaderElector
 
 		// leaderChange is the channel that is notified when the leader changes.
-		// Used to signal changes in leadership status.
 		leaderChange chan struct{}
 
 		// redisPool is the redis pool for the application.
-		// Manages connections to the Redis database.
 		redisPool goredis.Pool
 
 		// workerPool is the worker pool that can execute tasks concurrently.
-		// Provides a pool of workers for handling concurrent tasks.
 		workerPool workerpool.Pool
 
 		// indefiniteAsyncTasks is the list of indefinite async tasks for the application.
-		// Stores tasks that run indefinitely until the application shuts down.
 		indefiniteAsyncTasks sync.Map
 
 		// fixedHashBucket is the fixed hash bucket for the application.
-		// Used for consistent hashing of data.
 		fixedHashBucket *cache.FixedHashBucket
 
 		// serviceEndpointHashBucket is the service endpoint hash bucket for the application.
-		// Manages consistent hashing for service endpoints.
 		serviceEndpointHashBucket *cache.ServiceEndpointHashBucket
 
 		// natsClient is the NATS client for the application.
-		// Provides messaging capabilities using the NATS protocol.
 		natsClient *nats.Conn
 
 		// natsJetStream is the NATS JetStream for the application.
-		// Manages JetStream streams and consumers.
 		natsJetStream jetstream.JetStream
 
 		// natsStream is the NATS stream for the application.
-		// Represents a JetStream stream for message storage and retrieval.
 		natsStream jetstream.Stream
 	}
 )
 
 // NewApp creates a new application with the given logger.
-//
-// Note: This function is thread-safe and ensures that the shutdown process is executed only once,
-// even if called from multiple threads. It blocks all calling threads until the shutdown is complete.
 func NewApp(l *slog.Logger) (*App, error) {
 	if l == nil {
 		return nil, ErrNilLogger
@@ -217,13 +179,16 @@ func NewApp(l *slog.Logger) (*App, error) {
 		baseCfg:        baseCfg,
 		baseCtx:        baseCtx,
 		baseCtxCancel:  baseCtxCancel,
-		isStartedChan:  make(chan struct{}), // Channel to signal when the application has started.
-		metricsEnabled: true,                // Enable metrics collection by default.
-		shutdownWg:     new(sync.WaitGroup), // Wait group for managing shutdown tasks.
+		isStartedChan:  make(chan struct{}),
+		metricsEnabled: true, // Enable metrics collection by default.
+		shutdownWg:     new(sync.WaitGroup),
 	}, nil
 }
 
 // Start starts the application and applies the given options.
+//
+// Note: This function is thread-safe and ensures that the startup process is executed only once,
+// even if called from multiple threads. It blocks all calling threads until the startup is complete.
 func (a *App) Start(opts ...StartOption) error {
 	var startErr error
 	a.startOnce.Do(func() {
@@ -453,7 +418,6 @@ func (a *App) VaultClient() vaulty.Client {
 }
 
 // Viper returns the viper instance for the application.
-//   - If the viper instance has not been registered.
 func (a *App) Viper() *viper.Viper {
 	if a.vip == nil {
 		a.l.Error("viper instance has not been registered")

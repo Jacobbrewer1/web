@@ -14,7 +14,6 @@ var _ HashBucket = new(FixedHashBucket)
 
 // FixedHashBucket represents a mechanism for determining whether supplied keys belong to the current bucket index.
 // It uses a consistent hashing ring to distribute keys across buckets based on their hash values.
-// The bucket index is advanced in a round-robin fashion, ensuring even distribution of keys over time.
 type FixedHashBucket struct {
 	// hr is the consistent hashing ring used to map keys to bucket indices.
 	hr *hashring.HashRing
