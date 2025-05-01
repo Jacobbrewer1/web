@@ -1,0 +1,83 @@
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load("@bazel_gazelle//:def.bzl", "gazelle", "gazelle_binary")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+# Extend the gazelle binary to make it capable of generating go code.
+gazelle_binary(
+    name = "gazelle-gen",
+    languages = [
+        "@bazel_gazelle//language/go",
+    ],
+)
+
+# gazelle:prefix github.com/jacobbrewer1/web
+# gazelle:exclude vendor
+# gazelle:exclude magefiles
+gazelle(
+    name = "gazelle",
+    gazelle = ":gazelle-gen",
+)
+
+go_library(
+    name = "web",
+    srcs = [
+        "app.go",
+        "context.go",
+        "gen.go",
+        "handlers.go",
+        "options.go",
+        "options_helpers.go",
+        "vault.go",
+    ],
+    importpath = "github.com/jacobbrewer1/web",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cache",
+        "//health",
+        "//k8s",
+        "//logging",
+        "//version",
+        "@com_github_caarlos0_env_v10//:env",
+        "@com_github_fsnotify_fsnotify//:fsnotify",
+        "@com_github_gomodule_redigo//redis",
+        "@com_github_gorilla_mux//:mux",
+        "@com_github_jacobbrewer1_goredis//:goredis",
+        "@com_github_jacobbrewer1_uhttp//:uhttp",
+        "@com_github_jacobbrewer1_vaulty//:vaulty",
+        "@com_github_jacobbrewer1_vaulty//vsql",
+        "@com_github_jacobbrewer1_workerpool//:workerpool",
+        "@com_github_nats_io_nats_go//:nats_go",
+        "@com_github_nats_io_nats_go//jetstream",
+        "@com_github_prometheus_client_golang//prometheus/promhttp",
+        "@com_github_spf13_viper//:viper",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_client_go//informers",
+        "@io_k8s_client_go//kubernetes",
+        "@io_k8s_client_go//listers/core/v1:core",
+        "@io_k8s_client_go//rest",
+        "@io_k8s_client_go//tools/cache",
+        "@io_k8s_client_go//tools/leaderelection",
+        "@io_k8s_client_go//tools/leaderelection/resourcelock",
+        "@io_k8s_klog_v2//:klog",
+    ],
+)
+
+go_test(
+    name = "web_test",
+    srcs = [
+        "app_test.go",
+        "handlers_test.go",
+    ],
+    embed = [":web"],
+    deps = [
+        "//logging",
+        "@com_github_stretchr_testify//require",
+    ],
+)
+
+write_source_files(
+    name = "gen_mock",
+    additional_update_targets = [
+        "//cache/mock:gen_mock",
+    ],
+)

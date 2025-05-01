@@ -1,0 +1,41 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "cache",
+    srcs = [
+        "fixed_hash_bucket.go",
+        "hash_bucket.go",
+        "service_endpoint_hash_bucket.go",
+    ],
+    importpath = "github.com/jacobbrewer1/web/cache",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//logging",
+        "//slices",
+        "@com_github_serialx_hashring//:hashring",
+        "@io_k8s_api//discovery/v1:discovery",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_client_go//informers",
+        "@io_k8s_client_go//kubernetes",
+        "@io_k8s_client_go//tools/cache",
+    ],
+)
+
+go_test(
+    name = "cache_test",
+    srcs = [
+        "fixed_hash_bucket_test.go",
+        "service_endpoint_hash_bucket_test.go",
+    ],
+    embed = [":cache"],
+    deps = [
+        "//k8s",
+        "//slices",
+        "@com_github_serialx_hashring//:hashring",
+        "@com_github_stretchr_testify//require",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_api//discovery/v1:discovery",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_client_go//kubernetes/fake",
+    ],
+)
