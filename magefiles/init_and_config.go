@@ -22,7 +22,7 @@ var isCIRunner = sync.OnceValue(func() bool {
 	return ciRunner || githubRunner
 })
 
-// isCIRunner checks debug mode is enabled
+// isDebugMode checks debug mode is enabled
 var isDebugMode = sync.OnceValue(func() bool {
 	gotStr := os.Getenv("RUNNER_DEBUG")
 	got, _ := strconv.ParseBool(gotStr)
