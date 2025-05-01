@@ -3,7 +3,6 @@ package health
 import "fmt"
 
 // CheckerOption defines a function type that modifies a Checker instance.
-// It returns an error if the modification fails.
 type CheckerOption func(*Checker) error
 
 // WithCheckerCheck adds a single check to the Checker.

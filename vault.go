@@ -24,7 +24,6 @@ const (
 //
 // Note:
 //   - This is defined as a variable to allow users of the package to override it if needed.
-//     For example, users may want to use a different signal or context for testing or customization.
 var VaultClient = func(ctx context.Context, l *slog.Logger, v *viper.Viper) (vaulty.Client, error) {
 	addr := v.GetString("vault.address")
 	if addr == "" {

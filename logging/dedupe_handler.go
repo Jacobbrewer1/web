@@ -13,9 +13,6 @@ import (
 var _ slog.Handler = new(dedupeHandler)
 
 // dedupeHandler is a custom slog.Handler that deduplicates attributes.
-//
-// This struct is used to wrap another slog.Handler and ensure that attributes
-// with duplicate keys are deduplicated before being passed to the underlying handler.
 type dedupeHandler struct {
 	// base is the underlying slog.Handler to which log records are delegated.
 	base slog.Handler

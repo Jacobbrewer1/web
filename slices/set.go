@@ -5,9 +5,6 @@ import (
 )
 
 // Set represents a mathematical set: https://en.wikipedia.org/wiki/Set_(mathematics)#
-//
-// A Set provides a thread-safe collection of unique elements of type T.
-// The elements must be comparable as defined by the Go language specification.
 type Set[T comparable] struct {
 	// mut is a read-write mutex that ensures thread-safe access to the set.
 	mut *sync.RWMutex
