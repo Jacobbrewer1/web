@@ -126,7 +126,7 @@ func TestUpsert_Create(t *testing.T) {
 func TestUpsert_Update(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ConfigMap", func(t *testing.T) {
+	t.Run("configmap", func(t *testing.T) {
 		t.Parallel()
 
 		kubeClient := fake.NewClientset()
