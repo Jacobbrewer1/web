@@ -220,11 +220,14 @@ func WithHealthCheck(checks ...*health.Check) StartOption {
 			return errors.New("health check server already registered")
 		}
 
+		// No grace period as we do not want to receive any traffic the moment the pod health check fails.
 		readinessChecker, err := health.NewChecker()
 		if err != nil {
 			return fmt.Errorf("error creating health checker: %w", err)
 		}
 
+		// Setting a grace period for liveness checks as Kubernetes will kill the pod
+		// if the liveness check fails. This allows for a grace period before the pod is killed.
 		livenessChecker, err := health.NewChecker(health.WithCheckerErrorGracePeriod(10 * time.Second))
 		if err != nil {
 			return fmt.Errorf("error creating liveness checker: %w", err)
