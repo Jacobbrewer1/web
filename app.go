@@ -27,7 +27,6 @@ import (
 	"github.com/jacobbrewer1/vaulty"
 	"github.com/jacobbrewer1/vaulty/vsql"
 	"github.com/jacobbrewer1/web/cache"
-	"github.com/jacobbrewer1/web/health"
 	"github.com/jacobbrewer1/web/logging"
 	"github.com/jacobbrewer1/web/version"
 	"github.com/jacobbrewer1/workerpool"
@@ -75,12 +74,6 @@ type (
 
 		// baseCfg is the base configuration for the application.
 		baseCfg *AppConfig
-
-		// healthReadyCheck is the health check function to indicate if the application is ready.
-		healthReadyCheck *health.Checker
-
-		// healthLiveCheck is the health check function to indicate if the application is live.
-		healthLiveCheck *health.Checker
 
 		// isStartedChan is a channel that is closed when the application is started.
 		isStartedChan chan struct{}
