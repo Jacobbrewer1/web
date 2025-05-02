@@ -29,7 +29,7 @@ type Checker struct {
 	// firstFailInCycle is the timestamp of the first failure in the current cycle.
 	firstFailInCycle atomic.Value
 
-	// errorGracePeriod is the time period in seconds during which errors are tolerated.
+	// errorGracePeriod is the time.Duration during which errors are tolerated.
 	errorGracePeriod time.Duration
 }
 
