@@ -77,10 +77,10 @@ type (
 		baseCfg *AppConfig
 
 		// healthReadyCheck is the health check function to indicate if the application is ready.
-		healthReadyCheck health.Checker
+		healthReadyCheck *health.Checker
 
 		// healthLiveCheck is the health check function to indicate if the application is live.
-		healthLiveCheck health.Checker
+		healthLiveCheck *health.Checker
 
 		// isStartedChan is a channel that is closed when the application is started.
 		isStartedChan chan struct{}
