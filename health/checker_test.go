@@ -303,3 +303,49 @@ func TestChecker_AddTest_Invalid_AlreadyExists(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, "check already exists: test_check", err.Error())
 }
+
+func TestChecker_ErrorGracePeriod(t *testing.T) {
+	t.Parallel()
+
+	t.Run("within grace period", func(t *testing.T) {
+		t.Parallel()
+
+		c, err := NewChecker(WithCheckerErrorGracePeriod(5 * time.Second))
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		check := NewCheck("test_check", func(_ context.Context) error {
+			return errors.New("test error")
+		})
+
+		err = c.AddCheck(check)
+		require.NoError(t, err)
+
+		// Simulate a failure
+		c.firstFailInCycle = time.Now().UTC().Add(-2 * time.Second)
+
+		res := c.Check(context.Background())
+		require.Equal(t, StatusUp, res.Status)
+	})
+
+	t.Run("outside grace period", func(t *testing.T) {
+		t.Parallel()
+
+		c, err := NewChecker(WithCheckerErrorGracePeriod(5 * time.Second))
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		check := NewCheck("test_check", func(_ context.Context) error {
+			return errors.New("test error")
+		})
+
+		err = c.AddCheck(check)
+		require.NoError(t, err)
+
+		// Simulate a failure
+		c.firstFailInCycle = time.Now().UTC().Add(-10 * time.Second)
+
+		res := c.Check(context.Background())
+		require.Equal(t, StatusDown, res.Status)
+	})
+}

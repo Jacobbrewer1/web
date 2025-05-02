@@ -10,6 +10,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gomodule/redigo/redis"
+	"github.com/gorilla/mux"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/spf13/viper"
@@ -219,23 +220,34 @@ func WithHealthCheck(checks ...*health.Check) StartOption {
 			return errors.New("health check server already registered")
 		}
 
-		checker, err := health.NewChecker()
+		readinessChecker, err := health.NewChecker()
 		if err != nil {
 			return fmt.Errorf("error creating health checker: %w", err)
 		}
 
+		livenessChecker, err := health.NewChecker()
+		if err != nil {
+			return fmt.Errorf("error creating liveness checker: %w", err)
+		}
+
 		for _, check := range checks {
-			if err := checker.AddCheck(check); err != nil {
+			if err := readinessChecker.AddCheck(check); err != nil {
 				return fmt.Errorf("error adding health check %s: %w", check.String(), err)
+			}
+
+			if err := livenessChecker.AddCheck(check); err != nil {
+				return fmt.Errorf("error adding liveness check %s: %w", check.String(), err)
 			}
 		}
 
+		r := mux.NewRouter()
+		r.Handle("/readyz", readinessChecker.Handler()).Methods(http.MethodGet)
+		r.Handle("/healthz", livenessChecker.Handler()).Methods(http.MethodGet)
 		a.servers.Store("health", &http.Server{
 			Addr:              fmt.Sprintf(":%d", HealthPort),
-			Handler:           checker.Handler(),
+			Handler:           r,
 			ReadHeaderTimeout: httpReadHeaderTimeout,
 		})
-
 		return nil
 	}
 }
