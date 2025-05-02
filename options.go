@@ -245,7 +245,7 @@ func WithHealthCheck(checks ...*health.Check) StartOption {
 
 		r := mux.NewRouter()
 		r.Handle("/readyz", readinessChecker.Handler()).Methods(http.MethodGet)
-		r.Handle("/healthz", livenessChecker.Handler()).Methods(http.MethodGet)
+		r.Handle("/livez", livenessChecker.Handler()).Methods(http.MethodGet)
 		a.servers.Store("health", &http.Server{
 			Addr:              fmt.Sprintf(":%d", HealthPort),
 			Handler:           r,
