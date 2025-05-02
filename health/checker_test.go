@@ -27,30 +27,59 @@ func TestNewChecker(t *testing.T) {
 }
 
 func TestNewCheckerHandler_Single(t *testing.T) {
-	now := time.Now().UTC()
-	timestamp = func() time.Time { return now }
+	t.Run("success", func(t *testing.T) {
+		now := time.Now().UTC()
+		timestamp = func() time.Time { return now }
 
-	gotCheck := NewCheck("test_check", func(_ context.Context) error {
-		return nil
+		gotCheck := NewCheck("test_check", func(_ context.Context) error {
+			return nil
+		})
+
+		got, err := NewChecker(WithCheckerCheck(gotCheck))
+		require.NoError(t, err)
+
+		handler := got.Handler()
+		require.NotNil(t, handler)
+
+		// Call the handler and check the response
+		req := httptest.NewRequest("GET", "/", http.NoBody)
+
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"))
+
+		expectedJSON := `{"status":"up","details":{"test_check":{"status":"up","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
+		require.JSONEq(t, expectedJSON, rec.Body.String())
 	})
 
-	got, err := NewChecker(WithCheckerCheck(gotCheck))
-	require.NoError(t, err)
+	t.Run("error", func(t *testing.T) {
+		now := time.Now().UTC()
+		timestamp = func() time.Time { return now }
 
-	handler := got.Handler()
-	require.NotNil(t, handler)
+		gotCheck := NewCheck("test_check", func(_ context.Context) error {
+			return errors.New("test")
+		})
 
-	// Call the handler and check the response
-	req := httptest.NewRequest("GET", "/", http.NoBody)
+		got, err := NewChecker(WithCheckerCheck(gotCheck))
+		require.NoError(t, err)
 
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
+		handler := got.Handler()
+		require.NotNil(t, handler)
 
-	require.Equal(t, http.StatusOK, rec.Code)
-	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"))
+		// Call the handler and check the response
+		req := httptest.NewRequest("GET", "/", http.NoBody)
 
-	expectedJSON := `{"status":"up","details":{"test_check":{"status":"up","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
-	require.JSONEq(t, expectedJSON, rec.Body.String())
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		require.Equal(t, http.StatusServiceUnavailable, rec.Code)
+		require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"))
+
+		expectedJSON := `{"status":"down","details":{"test_check":{"status":"down","error":"test","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
+		require.JSONEq(t, expectedJSON, rec.Body.String())
+	})
 }
 
 func TestNewCheckerHandler_Single_StatusError(t *testing.T) {
@@ -302,4 +331,82 @@ func TestChecker_AddTest_Invalid_AlreadyExists(t *testing.T) {
 	err = c.AddCheck(check)
 	require.Error(t, err)
 	require.Equal(t, "check already exists: test_check", err.Error())
+}
+
+func TestChecker_ErrorGracePeriod(t *testing.T) {
+	t.Parallel()
+
+	t.Run("within grace period", func(t *testing.T) {
+		t.Parallel()
+
+		c, err := NewChecker(WithCheckerErrorGracePeriod(5 * time.Second))
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		check := NewCheck("test_check", func(_ context.Context) error {
+			return errors.New("test error")
+		})
+
+		err = c.AddCheck(check)
+		require.NoError(t, err)
+
+		// Simulate a failure
+		c.firstFailInCycle.Store(time.Now().UTC().Add(-2 * time.Second))
+
+		res := c.Check(context.Background())
+		require.Equal(t, StatusUp, res.Status)
+	})
+
+	t.Run("outside grace period", func(t *testing.T) {
+		t.Parallel()
+
+		c, err := NewChecker(WithCheckerErrorGracePeriod(5 * time.Second))
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		check := NewCheck("test_check", func(_ context.Context) error {
+			return errors.New("test error")
+		})
+
+		err = c.AddCheck(check)
+		require.NoError(t, err)
+
+		// Simulate a failure
+		c.firstFailInCycle.Store(time.Now().UTC().Add(-10 * time.Second))
+
+		res := c.Check(context.Background())
+		require.Equal(t, StatusDown, res.Status)
+	})
+
+	t.Run("multiple async checks", func(t *testing.T) {
+		t.Parallel()
+
+		c, err := NewChecker(WithCheckerErrorGracePeriod(5 * time.Second))
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		check1 := NewCheck("test_check_1", func(_ context.Context) error {
+			return errors.New("test error")
+		})
+
+		check2 := NewCheck("test_check_2", func(_ context.Context) error {
+			return errors.New("test error 2")
+		})
+
+		check3 := NewCheck("test_check_3", func(_ context.Context) error {
+			return errors.New("test error 3")
+		})
+
+		err = c.AddCheck(check1)
+		require.NoError(t, err)
+
+		err = c.AddCheck(check2)
+		require.NoError(t, err)
+
+		err = c.AddCheck(check3)
+		require.NoError(t, err)
+
+		res := c.Check(context.Background())
+		require.Equal(t, StatusUp, res.Status)
+	})
 }

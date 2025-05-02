@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"sync/atomic"
+	"time"
 )
 
 // Checker is a struct that manages multiple health checks.
@@ -23,6 +25,12 @@ type Checker struct {
 
 	// httpStatusCodeDown is the HTTP status code returned when one or more checks fail.
 	httpStatusCodeDown int
+
+	// firstFailInCycle is the timestamp of the first failure in the current cycle.
+	firstFailInCycle atomic.Value
+
+	// errorGracePeriod is the time.Duration during which errors are tolerated.
+	errorGracePeriod time.Duration
 }
 
 // NewChecker creates a new instance of the Checker struct.
@@ -83,15 +91,33 @@ func (c *Checker) Check(ctx context.Context) *Result {
 		go func(check *Check) {
 			defer wg.Done()
 
+			now := timestamp()
+
 			checkResult := NewResult()
 			checkStatus := StatusUp
 
 			if err := check.Check(ctx); err != nil {
 				checkStatus = StatusDown
+
+				firstFail, ok := c.firstFailInCycle.Load().(time.Time)
+				if !ok {
+					firstFail = time.Time{}
+				}
+				if firstFail.IsZero() {
+					c.firstFailInCycle.Store(now)
+					firstFail = now
+				}
+
+				if c.errorGracePeriod > 0 && now.Sub(firstFail) <= c.errorGracePeriod {
+					checkStatus = StatusUp // Still within grace period
+				}
+
 				if statusErr := new(StatusError); errors.As(err, &statusErr) {
 					checkStatus = statusErr.Status
 				}
 				checkResult.Error = err.Error()
+			} else {
+				c.firstFailInCycle.Store(time.Time{})
 			}
 
 			checkResult.SetStatus(checkStatus)

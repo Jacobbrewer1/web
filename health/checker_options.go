@@ -1,6 +1,9 @@
 package health
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // CheckerOption defines a function type that modifies a Checker instance.
 type CheckerOption func(*Checker) error
@@ -41,6 +44,14 @@ func WithCheckerHTTPCodeUp(code int) CheckerOption {
 func WithCheckerHTTPCodeDown(code int) CheckerOption {
 	return func(c *Checker) error {
 		c.httpStatusCodeDown = code
+		return nil
+	}
+}
+
+// WithCheckerErrorGracePeriod sets the grace period for errors. This will ignore errors from any checks.
+func WithCheckerErrorGracePeriod(gracePeriod time.Duration) CheckerOption {
+	return func(c *Checker) error {
+		c.errorGracePeriod = gracePeriod
 		return nil
 	}
 }
