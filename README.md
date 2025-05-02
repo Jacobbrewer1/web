@@ -134,7 +134,7 @@ port `9090`. The metrics are registered with the `prometheus` package and are ex
 If you want to add health checks that state whether the application is healthy or not, you can use the
 `web.WithHealthCheck` option. This option will take a list of health checks that will be run whenever the health check
 endpoint is hit. The health checks get setup on the routes `/readyz` and `/livez`; this allows for Kubernetes to check 
-the health of the application and determine is the application is ready to serve traffic or not.
+the health of the application and determine if the application is ready to serve traffic or not.
 
 ### Options
 
