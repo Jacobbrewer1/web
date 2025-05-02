@@ -27,11 +27,7 @@ func TestNewChecker(t *testing.T) {
 }
 
 func TestNewCheckerHandler_Single(t *testing.T) {
-	t.Parallel()
-
 	t.Run("success", func(t *testing.T) {
-		t.Parallel()
-
 		now := time.Now().UTC()
 		timestamp = func() time.Time { return now }
 
@@ -59,8 +55,6 @@ func TestNewCheckerHandler_Single(t *testing.T) {
 	})
 
 	t.Run("error", func(t *testing.T) {
-		t.Parallel()
-
 		now := time.Now().UTC()
 		timestamp = func() time.Time { return now }
 
@@ -357,7 +351,7 @@ func TestChecker_ErrorGracePeriod(t *testing.T) {
 		require.NoError(t, err)
 
 		// Simulate a failure
-		c.firstFailInCycle = time.Now().UTC().Add(-2 * time.Second)
+		c.firstFailInCycle.Store(time.Now().UTC().Add(-2 * time.Second))
 
 		res := c.Check(context.Background())
 		require.Equal(t, StatusUp, res.Status)
@@ -378,9 +372,41 @@ func TestChecker_ErrorGracePeriod(t *testing.T) {
 		require.NoError(t, err)
 
 		// Simulate a failure
-		c.firstFailInCycle = time.Now().UTC().Add(-10 * time.Second)
+		c.firstFailInCycle.Store(time.Now().UTC().Add(-10 * time.Second))
 
 		res := c.Check(context.Background())
 		require.Equal(t, StatusDown, res.Status)
+	})
+
+	t.Run("multiple async checks", func(t *testing.T) {
+		t.Parallel()
+
+		c, err := NewChecker(WithCheckerErrorGracePeriod(5 * time.Second))
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		check1 := NewCheck("test_check_1", func(_ context.Context) error {
+			return errors.New("test error")
+		})
+
+		check2 := NewCheck("test_check_2", func(_ context.Context) error {
+			return errors.New("test error 2")
+		})
+
+		check3 := NewCheck("test_check_3", func(_ context.Context) error {
+			return errors.New("test error 3")
+		})
+
+		err = c.AddCheck(check1)
+		require.NoError(t, err)
+
+		err = c.AddCheck(check2)
+		require.NoError(t, err)
+
+		err = c.AddCheck(check3)
+		require.NoError(t, err)
+
+		res := c.Check(context.Background())
+		require.Equal(t, StatusUp, res.Status)
 	})
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -26,7 +27,7 @@ type Checker struct {
 	httpStatusCodeDown int
 
 	// firstFailInCycle is the timestamp of the first failure in the current cycle.
-	firstFailInCycle time.Time
+	firstFailInCycle atomic.Value
 
 	// errorGracePeriod is the time period in seconds during which errors are tolerated.
 	errorGracePeriod time.Duration
@@ -98,11 +99,16 @@ func (c *Checker) Check(ctx context.Context) *Result {
 			if err := check.Check(ctx); err != nil {
 				checkStatus = StatusDown
 
-				if c.firstFailInCycle.IsZero() {
-					c.firstFailInCycle = now
+				firstFail, ok := c.firstFailInCycle.Load().(time.Time)
+				if !ok {
+					firstFail = time.Time{}
+				}
+				if firstFail.IsZero() {
+					c.firstFailInCycle.Store(now)
+					firstFail = now
 				}
 
-				if c.errorGracePeriod > 0 && now.Sub(c.firstFailInCycle) <= c.errorGracePeriod {
+				if c.errorGracePeriod > 0 && now.Sub(firstFail) <= c.errorGracePeriod {
 					checkStatus = StatusUp // Still within grace period
 				}
 
@@ -111,7 +117,7 @@ func (c *Checker) Check(ctx context.Context) *Result {
 				}
 				checkResult.Error = err.Error()
 			} else {
-				c.firstFailInCycle = time.Time{} // Reset the first failure timestamp
+				c.firstFailInCycle.Store(time.Time{})
 			}
 
 			checkResult.SetStatus(checkStatus)
