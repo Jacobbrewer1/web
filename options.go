@@ -225,7 +225,7 @@ func WithHealthCheck(checks ...*health.Check) StartOption {
 			return fmt.Errorf("error creating health checker: %w", err)
 		}
 
-		livenessChecker, err := health.NewChecker()
+		livenessChecker, err := health.NewChecker(health.WithCheckerErrorGracePeriod(10 * time.Second))
 		if err != nil {
 			return fmt.Errorf("error creating liveness checker: %w", err)
 		}

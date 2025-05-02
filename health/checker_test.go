@@ -27,30 +27,65 @@ func TestNewChecker(t *testing.T) {
 }
 
 func TestNewCheckerHandler_Single(t *testing.T) {
-	now := time.Now().UTC()
-	timestamp = func() time.Time { return now }
+	t.Parallel()
 
-	gotCheck := NewCheck("test_check", func(_ context.Context) error {
-		return nil
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		now := time.Now().UTC()
+		timestamp = func() time.Time { return now }
+
+		gotCheck := NewCheck("test_check", func(_ context.Context) error {
+			return nil
+		})
+
+		got, err := NewChecker(WithCheckerCheck(gotCheck))
+		require.NoError(t, err)
+
+		handler := got.Handler()
+		require.NotNil(t, handler)
+
+		// Call the handler and check the response
+		req := httptest.NewRequest("GET", "/", http.NoBody)
+
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"))
+
+		expectedJSON := `{"status":"up","details":{"test_check":{"status":"up","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
+		require.JSONEq(t, expectedJSON, rec.Body.String())
 	})
 
-	got, err := NewChecker(WithCheckerCheck(gotCheck))
-	require.NoError(t, err)
+	t.Run("error", func(t *testing.T) {
+		t.Parallel()
 
-	handler := got.Handler()
-	require.NotNil(t, handler)
+		now := time.Now().UTC()
+		timestamp = func() time.Time { return now }
 
-	// Call the handler and check the response
-	req := httptest.NewRequest("GET", "/", http.NoBody)
+		gotCheck := NewCheck("test_check", func(_ context.Context) error {
+			return errors.New("test")
+		})
 
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
+		got, err := NewChecker(WithCheckerCheck(gotCheck))
+		require.NoError(t, err)
 
-	require.Equal(t, http.StatusOK, rec.Code)
-	require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"))
+		handler := got.Handler()
+		require.NotNil(t, handler)
 
-	expectedJSON := `{"status":"up","details":{"test_check":{"status":"up","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
-	require.JSONEq(t, expectedJSON, rec.Body.String())
+		// Call the handler and check the response
+		req := httptest.NewRequest("GET", "/", http.NoBody)
+
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		require.Equal(t, http.StatusServiceUnavailable, rec.Code)
+		require.Equal(t, "application/json; charset=utf-8", rec.Header().Get("Content-Type"))
+
+		expectedJSON := `{"status":"down","details":{"test_check":{"status":"down","error":"test","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}}`
+		require.JSONEq(t, expectedJSON, rec.Body.String())
+	})
 }
 
 func TestNewCheckerHandler_Single_StatusError(t *testing.T) {
