@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,10 +20,12 @@ import (
 	"github.com/jacobbrewer1/web/slices"
 )
 
+const (
+	// k8sNameLabel is the label used to identify the Kubernetes resource name.
+	k8sNameLabel = "app.kubernetes.io/name"
+)
+
 // Ensures that ServiceEndpointHashBucket implements the HashBucket interface.
-//
-// This line is a compile-time check to verify that the ServiceEndpointHashBucket
-// struct satisfies all the methods defined in the HashBucket interface.
 var _ HashBucket = new(ServiceEndpointHashBucket)
 
 // ServiceEndpointHashBucket represents a mechanism which determines whether the current application instance should process
@@ -84,13 +87,25 @@ func (sb *ServiceEndpointHashBucket) Start(ctx context.Context) error {
 	}
 
 	// Get the initial list of endpoint slices for the application
-	endpointSliceList, err := sb.kubeClient.DiscoveryV1().EndpointSlices(sb.appNamespace).Get(ctx, sb.appName, metav1.GetOptions{})
+	endpointSliceList, err := sb.kubeClient.DiscoveryV1().EndpointSlices(sb.appNamespace).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", k8sNameLabel, sb.appName),
+	})
 	if err != nil {
 		return fmt.Errorf("error getting initial endpoints: %w", err)
+	} else if len(endpointSliceList.Items) == 0 {
+		return fmt.Errorf("no endpoint slices found for app %s in namespace %s", sb.appName, sb.appNamespace)
 	}
 
-	// Convert the endpoint slice into a set of hostnames
-	currentHostSet := endpointSliceToSet(endpointSliceList)
+	// Combine all endpoints from all slices into a single set
+	currentHostSet := slices.NewSet[string]()
+	for i := range endpointSliceList.Items {
+		endpointSlice := &endpointSliceList.Items[i]
+		sliceHosts := endpointSliceToSet(endpointSlice)
+		sliceHosts.Each(func(host string) {
+			currentHostSet.Add(host)
+		})
+	}
+
 	sb.l.Info("initialising hash ring with hosts", slog.Any(logging.KeyHosts, currentHostSet.Items()))
 
 	// Lock the mutex to ensure thread-safe access to the hash ring
@@ -142,8 +157,14 @@ func (sb *ServiceEndpointHashBucket) onEndpointUpdate(oldEndpoints, newEndpoints
 		return
 	}
 
-	// Check if the updated endpoint slice matches the application name and namespace
-	if coreNewEndpoints.Name != sb.appName || coreNewEndpoints.Namespace != sb.appNamespace {
+	// Check if the updated endpoint slice matches the application
+	if coreNewEndpoints.GetNamespace() != sb.appNamespace {
+		return
+	}
+
+	// Check if this EndpointSlice belongs to our application
+	generateName := coreNewEndpoints.GetGenerateName()
+	if coreNewEndpoints.Labels[k8sNameLabel] != sb.appName && (generateName == "" || !strings.HasPrefix(generateName, sb.appName)) {
 		return
 	}
 
