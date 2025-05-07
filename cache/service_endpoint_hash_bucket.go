@@ -26,7 +26,7 @@ const (
 )
 
 // Ensures that ServiceEndpointHashBucket implements the HashBucket interface.
-var _ HashBucket = new(ServiceEndpointHashBucket)
+var _ HashBucket = (*ServiceEndpointHashBucket)(nil)
 
 // ServiceEndpointHashBucket represents a mechanism which determines whether the current application instance should process
 // a particular key. The bucket size is determined by the number of active endpoints in the supplied Kubernetes service.

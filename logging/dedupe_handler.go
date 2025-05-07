@@ -6,7 +6,7 @@ import (
 )
 
 // Ensure dedupeHandler implements the slog.Handler interface.
-var _ slog.Handler = new(dedupeHandler)
+var _ slog.Handler = (*dedupeHandler)(nil)
 
 // dedupeHandler is a custom slog.Handler that deduplicates attributes.
 type dedupeHandler struct {
