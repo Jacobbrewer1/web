@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/serialx/hashring"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -379,6 +380,75 @@ func Test_endpointSliceToSet(t *testing.T) {
 			},
 		),
 	)
+}
+
+func Benchmark_OnEndpointUpdate(b *testing.B) {
+	sb := &ServiceEndpointHashBucket{
+		mut:          new(sync.RWMutex),
+		l:            slog.New(slog.DiscardHandler),
+		hr:           hashring.New([]string{}),
+		appName:      "my-app-name",
+		appNamespace: k8s.DeployedNamespace(),
+		thisPod:      k8s.PodName(),
+	}
+
+	newUUIDInHashRing := func() string {
+		uid := uuid.New().String()
+		sb.hr.AddNode(uid)
+		return uid
+	}
+
+	b.ResetTimer()
+
+	for range b.N {
+		sb.onEndpointUpdate(
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:         "my-app-name-n4wmx",
+					Namespace:    k8s.DeployedNamespace(),
+					GenerateName: "my-app-name-",
+					Labels: map[string]string{
+						"app.kubernetes.io/name": "my-app-name",
+					},
+				},
+				Endpoints: []discoveryv1.Endpoint{
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: newUUIDInHashRing(),
+						},
+					},
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: newUUIDInHashRing(),
+						},
+					},
+				},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:         "my-app-name-n4wmx",
+					Namespace:    k8s.DeployedNamespace(),
+					GenerateName: "my-app-name-",
+				},
+				Endpoints: []discoveryv1.Endpoint{
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: uuid.New().String(),
+						},
+					},
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: uuid.New().String(),
+						},
+					},
+				},
+			},
+		)
+	}
 }
 
 func Test_InBucket_WithoutStart(t *testing.T) {
