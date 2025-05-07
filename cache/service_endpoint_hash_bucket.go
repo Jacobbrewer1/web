@@ -164,7 +164,7 @@ func (sb *ServiceEndpointHashBucket) onEndpointUpdate(oldEndpoints, newEndpoints
 
 	// Check if this EndpointSlice belongs to our application
 	generateName := coreNewEndpoints.GetGenerateName()
-	if !(generateName != "" && strings.HasPrefix(generateName, sb.appName)) && coreNewEndpoints.Labels[k8sNameLabel] != sb.appName {
+	if coreNewEndpoints.Labels[k8sNameLabel] != sb.appName && (generateName == "" || !strings.HasPrefix(generateName, sb.appName)) {
 		return
 	}
 
