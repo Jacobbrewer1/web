@@ -24,9 +24,23 @@ func Test_Lifecycle(t *testing.T) {
 	// Create an EndpointSlice instead of Endpoints
 	endpointSlice := &discoveryv1.EndpointSlice{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-app-name",
-			Namespace: k8s.DeployedNamespace(),
+			Name:         "my-app-name-n4wmx",
+			GenerateName: "my-app-name-",
+			Namespace:    k8s.DeployedNamespace(),
+			Labels: map[string]string{
+				"app.kubernetes.io/component":            "application",
+				"app.kubernetes.io/instance":             "my-app-name",
+				"app.kubernetes.io/managed-by":           "Helm",
+				"app.kubernetes.io/name":                 "my-app-name",
+				"app.kubernetes.io/version":              "05ed3af",
+				"endpointslice.kubernetes.io/managed-by": "endpointslice-controller.k8s.io",
+				"kubernetes.io/service-name":             "my-app-name",
+			},
+			Annotations: map[string]string{
+				"endpoints.kubernetes.io/last-change-trigger-time": time.Now().Format(time.RFC3339),
+			},
 		},
+		AddressType: discoveryv1.AddressTypeIPv4,
 		Endpoints: []discoveryv1.Endpoint{
 			{
 				TargetRef: &corev1.ObjectReference{
@@ -91,67 +105,248 @@ func Test_Lifecycle(t *testing.T) {
 func Test_onEndpointUpdate(t *testing.T) {
 	t.Parallel()
 
-	sb := &ServiceEndpointHashBucket{
-		mut: new(sync.RWMutex),
-		l:   slog.New(slog.DiscardHandler),
-		hr: hashring.New([]string{
-			"a",
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		sb := &ServiceEndpointHashBucket{
+			mut: new(sync.RWMutex),
+			l:   slog.New(slog.DiscardHandler),
+			hr: hashring.New([]string{
+				"a",
+				"b",
+			}),
+			appName:      "my-app-name",
+			appNamespace: k8s.DeployedNamespace(),
+			thisPod:      k8s.PodName(),
+		}
+
+		sb.onEndpointUpdate(
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:         "my-app-name-n4wmx",
+					Namespace:    k8s.DeployedNamespace(),
+					GenerateName: "my-app-name-",
+					Labels: map[string]string{
+						"app.kubernetes.io/name": "my-app-name",
+					},
+				},
+				Endpoints: []discoveryv1.Endpoint{
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "a",
+						},
+					},
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "b",
+						},
+					},
+				},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:         "my-app-name-n4wmx",
+					Namespace:    k8s.DeployedNamespace(),
+					GenerateName: "my-app-name-",
+				},
+				Endpoints: []discoveryv1.Endpoint{
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "b",
+						},
+					},
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "c",
+						},
+					},
+				},
+			},
+		)
+
+		nodes, ok := sb.hr.GetNodes("", sb.hr.Size())
+		require.True(t, ok)
+		require.Equal(t, []string{
 			"b",
-		}),
-		appName:      "my-app-name",
-		appNamespace: k8s.DeployedNamespace(),
-		thisPod:      k8s.PodName(),
-	}
+			"c",
+		}, nodes)
+	})
 
-	sb.onEndpointUpdate(
-		&discoveryv1.EndpointSlice{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-app-name",
-				Namespace: k8s.DeployedNamespace(),
-			},
-			Endpoints: []discoveryv1.Endpoint{
-				{
-					TargetRef: &corev1.ObjectReference{
-						Kind: "Pod",
-						Name: "a",
-					},
-				},
-				{
-					TargetRef: &corev1.ObjectReference{
-						Kind: "Pod",
-						Name: "b",
-					},
-				},
-			},
-		},
-		&discoveryv1.EndpointSlice{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-app-name",
-				Namespace: k8s.DeployedNamespace(),
-			},
-			Endpoints: []discoveryv1.Endpoint{
-				{
-					TargetRef: &corev1.ObjectReference{
-						Kind: "Pod",
-						Name: "b",
-					},
-				},
-				{
-					TargetRef: &corev1.ObjectReference{
-						Kind: "Pod",
-						Name: "c",
-					},
-				},
-			},
-		},
-	)
+	t.Run("success-no-generate-name", func(t *testing.T) {
+		t.Parallel()
 
-	nodes, ok := sb.hr.GetNodes("", sb.hr.Size())
-	require.True(t, ok)
-	require.Equal(t, []string{
-		"b",
-		"c",
-	}, nodes)
+		sb := &ServiceEndpointHashBucket{
+			mut: new(sync.RWMutex),
+			l:   slog.New(slog.DiscardHandler),
+			hr: hashring.New([]string{
+				"a",
+				"b",
+			}),
+			appName:      "my-app-name",
+			appNamespace: k8s.DeployedNamespace(),
+			thisPod:      k8s.PodName(),
+		}
+
+		sb.onEndpointUpdate(
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-app-name-n4wmx",
+					Namespace: k8s.DeployedNamespace(),
+					Labels: map[string]string{
+						"app.kubernetes.io/name": "my-app-name",
+					},
+				},
+				Endpoints: []discoveryv1.Endpoint{
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "a",
+						},
+					},
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "b",
+						},
+					},
+				},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-app-name-n4wmx",
+					Namespace: k8s.DeployedNamespace(),
+					Labels: map[string]string{
+						"app.kubernetes.io/name": "my-app-name",
+					},
+				},
+				Endpoints: []discoveryv1.Endpoint{
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "b",
+						},
+					},
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "c",
+						},
+					},
+				},
+			},
+		)
+
+		nodes, ok := sb.hr.GetNodes("", sb.hr.Size())
+		require.True(t, ok)
+		require.Equal(t, []string{
+			"b",
+			"c",
+		}, nodes)
+	})
+
+	t.Run("different-namespace", func(t *testing.T) {
+		t.Parallel()
+
+		sb := &ServiceEndpointHashBucket{
+			mut: new(sync.RWMutex),
+			l:   slog.New(slog.DiscardHandler),
+			hr: hashring.New([]string{
+				"a",
+				"b",
+			}),
+			appName:      "my-app-name",
+			appNamespace: k8s.DeployedNamespace(),
+			thisPod:      k8s.PodName(),
+		}
+
+		sb.onEndpointUpdate(
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:         "my-app-name-n4wmx",
+					Namespace:    "other-namespace",
+					GenerateName: "my-app-name-",
+					Labels: map[string]string{
+						"app.kubernetes.io/name": "my-app-name",
+					},
+				},
+				Endpoints: []discoveryv1.Endpoint{},
+			},
+			nil,
+		)
+
+		nodes, ok := sb.hr.GetNodes("", sb.hr.Size())
+		require.True(t, ok)
+		require.Equal(t, []string{
+			"b",
+			"a",
+		}, nodes)
+	})
+
+	t.Run("different-app", func(t *testing.T) {
+		t.Parallel()
+
+		sb := &ServiceEndpointHashBucket{
+			mut: new(sync.RWMutex),
+			l:   slog.New(slog.DiscardHandler),
+			hr: hashring.New([]string{
+				"a",
+				"b",
+			}),
+			appName:      "my-app-name",
+			appNamespace: k8s.DeployedNamespace(),
+			thisPod:      k8s.PodName(),
+		}
+
+		sb.onEndpointUpdate(
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:         "other-app-name-n4wmx",
+					Namespace:    k8s.DeployedNamespace(),
+					GenerateName: "other-app-name-",
+					Labels: map[string]string{
+						"app.kubernetes.io/name": "other-app-name",
+					},
+				},
+				Endpoints: []discoveryv1.Endpoint{
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "a",
+						},
+					},
+				},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:         "other-app-name-n4wmx",
+					Namespace:    k8s.DeployedNamespace(),
+					GenerateName: "other-app-name-",
+					Labels: map[string]string{
+						"app.kubernetes.io/name": "other-app-name",
+					},
+				},
+				Endpoints: []discoveryv1.Endpoint{
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "c",
+						},
+					},
+				},
+			},
+		)
+
+		nodes, ok := sb.hr.GetNodes("", sb.hr.Size())
+		require.True(t, ok)
+		require.Equal(t, []string{
+			"b",
+			"a",
+		}, nodes)
+	})
 }
 
 func Test_endpointSliceToSet(t *testing.T) {
