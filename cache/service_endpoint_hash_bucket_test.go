@@ -392,7 +392,7 @@ func Benchmark_OnEndpointUpdate(b *testing.B) {
 		thisPod:      k8s.PodName(),
 	}
 
-	newUUID := func() string {
+	newUUIDInHashRing := func() string {
 		uid := uuid.New().String()
 		sb.hr.AddNode(uid)
 		return uid
@@ -415,13 +415,13 @@ func Benchmark_OnEndpointUpdate(b *testing.B) {
 					{
 						TargetRef: &corev1.ObjectReference{
 							Kind: "Pod",
-							Name: newUUID(),
+							Name: newUUIDInHashRing(),
 						},
 					},
 					{
 						TargetRef: &corev1.ObjectReference{
 							Kind: "Pod",
-							Name: newUUID(),
+							Name: newUUIDInHashRing(),
 						},
 					},
 				},
