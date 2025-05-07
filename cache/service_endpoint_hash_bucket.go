@@ -20,6 +20,11 @@ import (
 	"github.com/jacobbrewer1/web/slices"
 )
 
+const (
+	// k8sNameLabel is the label used to identify the Kubernetes resource name.
+	k8sNameLabel = "app.kubernetes.io/name"
+)
+
 // Ensures that ServiceEndpointHashBucket implements the HashBucket interface.
 var _ HashBucket = new(ServiceEndpointHashBucket)
 
@@ -83,7 +88,7 @@ func (sb *ServiceEndpointHashBucket) Start(ctx context.Context) error {
 
 	// Get the initial list of endpoint slices for the application
 	endpointSliceList, err := sb.kubeClient.DiscoveryV1().EndpointSlices(sb.appNamespace).List(ctx, metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("app.kubernetes.io/name=%s", sb.appName),
+		LabelSelector: fmt.Sprintf("%s=%s", k8sNameLabel, sb.appName),
 	})
 	if err != nil {
 		return fmt.Errorf("error getting initial endpoints: %w", err)
@@ -152,8 +157,14 @@ func (sb *ServiceEndpointHashBucket) onEndpointUpdate(oldEndpoints, newEndpoints
 		return
 	}
 
-	// Check if the updated endpoint slice matches the application name and namespace
-	if !strings.HasPrefix(coreNewEndpoints.GetGenerateName(), sb.appName) || coreNewEndpoints.GetNamespace() != sb.appNamespace {
+	// Check if the updated endpoint slice matches the application
+	if coreNewEndpoints.GetNamespace() != sb.appNamespace {
+		return
+	}
+
+	// Check if this EndpointSlice belongs to our application
+	generateName := coreNewEndpoints.GetGenerateName()
+	if !(generateName != "" && strings.HasPrefix(generateName, sb.appName)) && coreNewEndpoints.Labels[k8sNameLabel] != sb.appName {
 		return
 	}
 

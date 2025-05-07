@@ -105,69 +105,148 @@ func Test_Lifecycle(t *testing.T) {
 func Test_onEndpointUpdate(t *testing.T) {
 	t.Parallel()
 
-	sb := &ServiceEndpointHashBucket{
-		mut: new(sync.RWMutex),
-		l:   slog.New(slog.DiscardHandler),
-		hr: hashring.New([]string{
-			"a",
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		sb := &ServiceEndpointHashBucket{
+			mut: new(sync.RWMutex),
+			l:   slog.New(slog.DiscardHandler),
+			hr: hashring.New([]string{
+				"a",
+				"b",
+			}),
+			appName:      "my-app-name",
+			appNamespace: k8s.DeployedNamespace(),
+			thisPod:      k8s.PodName(),
+		}
+
+		sb.onEndpointUpdate(
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:         "my-app-name-n4wmx",
+					Namespace:    k8s.DeployedNamespace(),
+					GenerateName: "my-app-name-",
+					Labels: map[string]string{
+						"app.kubernetes.io/name": "my-app-name",
+					},
+				},
+				Endpoints: []discoveryv1.Endpoint{
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "a",
+						},
+					},
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "b",
+						},
+					},
+				},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:         "my-app-name-n4wmx",
+					Namespace:    k8s.DeployedNamespace(),
+					GenerateName: "my-app-name-",
+				},
+				Endpoints: []discoveryv1.Endpoint{
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "b",
+						},
+					},
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "c",
+						},
+					},
+				},
+			},
+		)
+
+		nodes, ok := sb.hr.GetNodes("", sb.hr.Size())
+		require.True(t, ok)
+		require.Equal(t, []string{
 			"b",
-		}),
-		appName:      "my-app-name",
-		appNamespace: k8s.DeployedNamespace(),
-		thisPod:      k8s.PodName(),
-	}
+			"c",
+		}, nodes)
+	})
 
-	sb.onEndpointUpdate(
-		&discoveryv1.EndpointSlice{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:         "my-app-name-n4wmx",
-				Namespace:    k8s.DeployedNamespace(),
-				GenerateName: "my-app-name-",
-			},
-			Endpoints: []discoveryv1.Endpoint{
-				{
-					TargetRef: &corev1.ObjectReference{
-						Kind: "Pod",
-						Name: "a",
-					},
-				},
-				{
-					TargetRef: &corev1.ObjectReference{
-						Kind: "Pod",
-						Name: "b",
-					},
-				},
-			},
-		},
-		&discoveryv1.EndpointSlice{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:         "my-app-name-n4wmx",
-				Namespace:    k8s.DeployedNamespace(),
-				GenerateName: "my-app-name-",
-			},
-			Endpoints: []discoveryv1.Endpoint{
-				{
-					TargetRef: &corev1.ObjectReference{
-						Kind: "Pod",
-						Name: "b",
-					},
-				},
-				{
-					TargetRef: &corev1.ObjectReference{
-						Kind: "Pod",
-						Name: "c",
-					},
-				},
-			},
-		},
-	)
+	t.Run("success-no-generate-name", func(t *testing.T) {
+		t.Parallel()
 
-	nodes, ok := sb.hr.GetNodes("", sb.hr.Size())
-	require.True(t, ok)
-	require.Equal(t, []string{
-		"b",
-		"c",
-	}, nodes)
+		sb := &ServiceEndpointHashBucket{
+			mut: new(sync.RWMutex),
+			l:   slog.New(slog.DiscardHandler),
+			hr: hashring.New([]string{
+				"a",
+				"b",
+			}),
+			appName:      "my-app-name",
+			appNamespace: k8s.DeployedNamespace(),
+			thisPod:      k8s.PodName(),
+		}
+
+		sb.onEndpointUpdate(
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-app-name-n4wmx",
+					Namespace: k8s.DeployedNamespace(),
+					Labels: map[string]string{
+						"app.kubernetes.io/name": "my-app-name",
+					},
+				},
+				Endpoints: []discoveryv1.Endpoint{
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "a",
+						},
+					},
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "b",
+						},
+					},
+				},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-app-name-n4wmx",
+					Namespace: k8s.DeployedNamespace(),
+					Labels: map[string]string{
+						"app.kubernetes.io/name": "my-app-name",
+					},
+				},
+				Endpoints: []discoveryv1.Endpoint{
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "b",
+						},
+					},
+					{
+						TargetRef: &corev1.ObjectReference{
+							Kind: "Pod",
+							Name: "c",
+						},
+					},
+				},
+			},
+		)
+
+		nodes, ok := sb.hr.GetNodes("", sb.hr.Size())
+		require.True(t, ok)
+		require.Equal(t, []string{
+			"b",
+			"c",
+		}, nodes)
+	})
 }
 
 func Test_endpointSliceToSet(t *testing.T) {
