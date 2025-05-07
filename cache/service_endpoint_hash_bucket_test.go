@@ -24,9 +24,23 @@ func Test_Lifecycle(t *testing.T) {
 	// Create an EndpointSlice instead of Endpoints
 	endpointSlice := &discoveryv1.EndpointSlice{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-app-name",
-			Namespace: k8s.DeployedNamespace(),
+			Name:         "my-app-name-n4wmx",
+			GenerateName: "my-app-name-",
+			Namespace:    k8s.DeployedNamespace(),
+			Labels: map[string]string{
+				"app.kubernetes.io/component":            "application",
+				"app.kubernetes.io/instance":             "my-app-name",
+				"app.kubernetes.io/managed-by":           "Helm",
+				"app.kubernetes.io/name":                 "my-app-name",
+				"app.kubernetes.io/version":              "05ed3af",
+				"endpointslice.kubernetes.io/managed-by": "endpointslice-controller.k8s.io",
+				"kubernetes.io/service-name":             "my-app-name",
+			},
+			Annotations: map[string]string{
+				"endpoints.kubernetes.io/last-change-trigger-time": time.Now().Format(time.RFC3339),
+			},
 		},
+		AddressType: discoveryv1.AddressTypeIPv4,
 		Endpoints: []discoveryv1.Endpoint{
 			{
 				TargetRef: &corev1.ObjectReference{
@@ -106,8 +120,9 @@ func Test_onEndpointUpdate(t *testing.T) {
 	sb.onEndpointUpdate(
 		&discoveryv1.EndpointSlice{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-app-name",
-				Namespace: k8s.DeployedNamespace(),
+				Name:         "my-app-name-n4wmx",
+				Namespace:    k8s.DeployedNamespace(),
+				GenerateName: "my-app-name-",
 			},
 			Endpoints: []discoveryv1.Endpoint{
 				{
@@ -126,8 +141,9 @@ func Test_onEndpointUpdate(t *testing.T) {
 		},
 		&discoveryv1.EndpointSlice{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-app-name",
-				Namespace: k8s.DeployedNamespace(),
+				Name:         "my-app-name-n4wmx",
+				Namespace:    k8s.DeployedNamespace(),
+				GenerateName: "my-app-name-",
 			},
 			Endpoints: []discoveryv1.Endpoint{
 				{
