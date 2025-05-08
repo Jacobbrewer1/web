@@ -81,6 +81,9 @@ type (
 		// startOnce ensures that the start function is only called once.
 		startOnce sync.Once
 
+		// startErr is the error that occurred during startup.
+		startErr error
+
 		// vip is the viper instance for the application.
 		vip *viper.Viper
 
@@ -190,7 +193,6 @@ func NewApp(l *slog.Logger) (*App, error) {
 // Note: This function is thread-safe and ensures that the startup process is executed only once,
 // even if called from multiple threads. It blocks all calling threads until the startup is complete.
 func (a *App) Start(opts ...StartOption) error {
-	var startErr error
 	a.startOnce.Do(func() {
 		defer close(a.isStartedChan)
 
@@ -204,7 +206,7 @@ func (a *App) Start(opts ...StartOption) error {
 		// Apply each provided StartOption to configure the application.
 		for _, opt := range opts {
 			if err := opt(a); err != nil { // nolint:revive // Traditional error handling
-				startErr = fmt.Errorf("failed to apply option: %w", err)
+				a.startErr = fmt.Errorf("failed to apply option: %w", err)
 				return
 			}
 		}
@@ -244,7 +246,7 @@ func (a *App) Start(opts ...StartOption) error {
 			return true
 		})
 		if serverErr != nil {
-			startErr = fmt.Errorf("server initialization error: %w", serverErr)
+			a.startErr = fmt.Errorf("server initialization error: %w", serverErr)
 			return
 		}
 
@@ -267,7 +269,7 @@ func (a *App) Start(opts ...StartOption) error {
 			return true
 		})
 		if taskErr != nil { // nolint:revive // Traditional error handling
-			startErr = fmt.Errorf("async task initialization error: %w", taskErr)
+			a.startErr = fmt.Errorf("async task initialization error: %w", taskErr)
 			return
 		}
 	})
@@ -276,12 +278,12 @@ func (a *App) Start(opts ...StartOption) error {
 	a.waitUntilStarted()
 
 	// Handle any startup errors by logging and initiating shutdown.
-	if startErr != nil {
-		a.l.Error("error detected in application startup", slog.String(logging.KeyError, startErr.Error()))
+	if a.startErr != nil {
+		a.l.Error("error detected in application startup", slog.String(logging.KeyError, a.startErr.Error()))
 		go a.Shutdown()
 	}
 
-	return startErr
+	return a.startErr
 }
 
 // startServer starts the given HTTP server and adds it to the application's shutdown wait group.
