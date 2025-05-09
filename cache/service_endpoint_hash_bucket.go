@@ -129,7 +129,7 @@ func (sb *ServiceEndpointHashBucket) Start(ctx context.Context) error {
 		sb.informerFactory.WaitForCacheSync(ctx.Done())
 
 		// Add an event handler to the endpoints informer to handle updates to endpoint slices
-		if _, err := sb.endpointsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		if _, err := sb.endpointsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{ // nolint:revive // Traditional error handling
 			UpdateFunc: sb.onEndpointUpdate,
 		}); err != nil {
 			sb.startErr = fmt.Errorf("error adding event handler to endpoints informer: %w", err)
