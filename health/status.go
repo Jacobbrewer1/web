@@ -79,6 +79,28 @@ func (s Status) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// UnmarshalJSON unmarshals the JSON data into a Status.
+func (s *Status) UnmarshalJSON(data []byte) error {
+	var statusStr string
+	if err := json.Unmarshal(data, &statusStr); err != nil {
+		return err
+	}
+
+	switch statusStr {
+	case "up":
+		*s = StatusUp
+	case "down":
+		*s = StatusDown
+	case "degraded":
+		*s = StatusDegraded
+	case "unknown":
+		*s = StatusUnknown
+	default:
+		return fmt.Errorf("%s is not a valid status", statusStr)
+	}
+	return nil
+}
+
 // StandardStatusListener creates a StatusListenerFunc that logs status changes.
 //
 // This function returns a StatusListenerFunc, which logs the health check's status changes

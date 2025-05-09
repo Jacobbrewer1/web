@@ -91,7 +91,7 @@ func (c *Checker) Check(ctx context.Context) *Result {
 		go func(check *Check) {
 			defer wg.Done()
 
-			now := timestamp()
+			now := time.Now().UTC()
 
 			checkResult := NewResult()
 			checkStatus := StatusUp
@@ -121,7 +121,7 @@ func (c *Checker) Check(ctx context.Context) *Result {
 			}
 
 			checkResult.SetStatus(checkStatus)
-			checkResult.SetTimestamp(timestamp())
+			checkResult.SetTimestamp(now)
 			result.SetStatus(checkResult.Status)
 			result.addDetail(check.String(), checkResult)
 		}(check)

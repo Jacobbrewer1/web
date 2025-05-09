@@ -3,9 +3,29 @@ package health
 import (
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
+
+func compareResult(t *testing.T, expected, actual *Result) {
+	t.Helper()
+
+	if expected.Timestamp != nil && actual.Timestamp != nil {
+		require.WithinDuration(t, *expected.Timestamp, *actual.Timestamp, 1*time.Second, "Timestamp mismatch: expected %v, got %v", expected.Timestamp, actual.Timestamp)
+	} else {
+		require.Equal(t, expected.Timestamp, actual.Timestamp, "Timestamp mismatch: expected %v, got %v", expected.Timestamp, actual.Timestamp)
+	}
+
+	require.Equal(t, expected.Status, actual.Status, "Status mismatch: expected %v, got %v", expected.Status, actual.Status)
+	require.Equal(t, expected.Error, actual.Error, "Error mismatch: expected %v, got %v", expected.Error, actual.Error)
+
+	require.Len(t, expected.Details, len(actual.Details), "Details length mismatch: expected %d, got %d", len(expected.Details), len(actual.Details))
+
+	for k := range expected.Details {
+		compareResult(t, expected.Details[k], actual.Details[k])
+	}
+}
 
 func TestResult_SetStatus(t *testing.T) {
 	t.Parallel()
