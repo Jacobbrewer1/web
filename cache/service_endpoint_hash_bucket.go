@@ -37,6 +37,9 @@ type ServiceEndpointHashBucket struct {
 	// startOnce is a sync.Once instance used to ensure that the Start method is only called once.
 	startOnce sync.Once
 
+	// startErr is an error that captures any errors encountered during the Start process.
+	startErr error
+
 	// hr represents the consistent hash ring used to distribute keys among application instances.
 	hr *hashring.HashRing
 
@@ -89,17 +92,16 @@ func (sb *ServiceEndpointHashBucket) Start(ctx context.Context) error {
 		return errors.New("context cannot be nil")
 	}
 
-	var startErr error
 	sb.startOnce.Do(func() {
 		// Get the initial list of endpoint slices for the application
 		endpointSliceList, err := sb.kubeClient.DiscoveryV1().EndpointSlices(sb.appNamespace).List(ctx, metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("%s=%s", k8sNameLabel, sb.appName),
 		})
 		if err != nil {
-			startErr = fmt.Errorf("error listing endpoint slices: %w", err)
+			sb.startErr = fmt.Errorf("error listing endpoint slices: %w", err)
 			return
 		} else if len(endpointSliceList.Items) == 0 {
-			startErr = fmt.Errorf("no endpoint slices found for application %s in namespace %s", sb.appName, sb.appNamespace)
+			sb.startErr = fmt.Errorf("no endpoint slices found for application %s in namespace %s", sb.appName, sb.appNamespace)
 			return
 		}
 
@@ -127,16 +129,14 @@ func (sb *ServiceEndpointHashBucket) Start(ctx context.Context) error {
 		sb.informerFactory.WaitForCacheSync(ctx.Done())
 
 		// Add an event handler to the endpoints informer to handle updates to endpoint slices
-		if _, err := sb.endpointsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		if _, err := sb.endpointsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{ // nolint:revive // Traditional error handling
 			UpdateFunc: sb.onEndpointUpdate,
 		}); err != nil {
-			startErr = fmt.Errorf("error adding event handler to endpoints informer: %w", err)
+			sb.startErr = fmt.Errorf("error adding event handler to endpoints informer: %w", err)
 			return
 		}
-
-		startErr = nil
 	})
-	return startErr
+	return sb.startErr
 }
 
 // InBucket checks if the given key is assigned to the current application instance

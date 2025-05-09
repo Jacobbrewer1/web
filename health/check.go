@@ -65,7 +65,7 @@ func (c *Check) Check(ctx context.Context) error {
 		return errors.New("context cannot be nil")
 	}
 
-	now := timestamp()
+	now := time.Now().UTC()
 	c.state.lastCheckTime = now
 
 	var (
