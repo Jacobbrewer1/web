@@ -260,7 +260,6 @@ func TestApp_Start(t *testing.T) {
 
 	t.Run("multiple starts - options not executed", func(t *testing.T) {
 		t.Parallel()
-
 		app := newTestApp(t)
 
 		// First start
@@ -279,7 +278,6 @@ func TestApp_Start(t *testing.T) {
 
 	t.Run("failing option aborts startup", func(t *testing.T) {
 		t.Parallel()
-
 		app := newTestApp(t)
 
 		called := false
@@ -301,16 +299,25 @@ func TestApp_Start(t *testing.T) {
 		t.Parallel()
 		app := newTestApp(t)
 
-		taskCalled := false
+		called := make(chan struct{})
 		app.indefiniteAsyncTasks.Store("test", func(ctx context.Context) {
-			taskCalled = true
+			called <- struct{}{}
+			// Wait for app to complete
 			<-ctx.Done()
 		})
 
 		err := app.Start()
 		require.NoError(t, err)
-		time.Sleep(50 * time.Millisecond)
-		require.True(t, taskCalled, "async task should be called")
+
+		app.waitUntilStarted()
+
+		// Wait for async task to be called or timeout after 3 seconds
+		select {
+		case <-called:
+			// Success - async task was called
+		case <-time.After(3 * time.Second):
+			t.Fatal("async task was not called in time")
+		}
 	})
 
 	t.Run("with async tasks bad func", func(t *testing.T) {

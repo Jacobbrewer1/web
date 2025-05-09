@@ -78,6 +78,9 @@ func Test_Lifecycle(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Eventually(t, func() bool {
+		sb.mut.RLock()
+		defer sb.mut.RUnlock()
+
 		nodes, ok := sb.hr.GetNodes("", sb.hr.Size())
 		return ok && len(nodes) == 3
 	}, 5*time.Second, 10*time.Millisecond)
