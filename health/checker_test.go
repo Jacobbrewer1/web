@@ -33,6 +33,8 @@ func TestNewChecker(t *testing.T) {
 }
 
 func TestNewChecker_Handler(t *testing.T) {
+	t.Parallel()
+
 	t.Run("single success", func(t *testing.T) {
 		t.Parallel()
 
