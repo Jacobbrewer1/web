@@ -276,6 +276,20 @@ func TestApp_Start(t *testing.T) {
 		require.False(t, optionCalled, "option should not be called on second start")
 	})
 
+	t.Run("multiple starts - error is maintained", func(t *testing.T) {
+		t.Parallel()
+		app := newTestApp(t)
+
+		// First start
+		err := app.Start(func(a *App) error {
+			return errors.New("error during startup")
+		})
+		require.EqualError(t, err, "failed to apply option: error during startup")
+
+		err = app.Start()
+		require.EqualError(t, err, "failed to apply option: error during startup")
+	})
+
 	t.Run("failing option aborts startup", func(t *testing.T) {
 		t.Parallel()
 		app := newTestApp(t)
