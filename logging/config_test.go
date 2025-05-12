@@ -18,7 +18,6 @@ func setEnv(t *testing.T, key, val string) {
 }
 
 func TestNewLoggingConfig(t *testing.T) {
-	t.Parallel()
 	tests := []struct {
 		name string
 		env  map[string]string
@@ -80,8 +79,6 @@ func TestNewLoggingConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			if tt.env != nil {
 				for k, v := range tt.env {
 					setEnv(t, k, v)
