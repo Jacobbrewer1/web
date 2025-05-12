@@ -129,7 +129,7 @@ func TestApp_StartServer(t *testing.T) {
 
 	// Try and start the same server again
 	err = app.StartServer("test1", svr1)
-	require.Error(t, err)
+	require.EqualError(t, err, "server test1 already exists")
 }
 
 func TestApp_ChildContext(t *testing.T) {

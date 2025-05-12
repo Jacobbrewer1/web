@@ -122,16 +122,18 @@ func TestResult_SetStatusOverride(t *testing.T) {
 	}
 }
 
-func TestResult_AddDetail_NilMap(t *testing.T) {
+func TestResult_AddDetail(t *testing.T) {
 	t.Parallel()
 
-	res := new(Result)
-	res.mtx = new(sync.RWMutex)
+	t.Run("AddDetail with nil Result", func(t *testing.T) {
+		res := new(Result)
+		res.mtx = new(sync.RWMutex)
 
-	require.NotPanics(t, func() {
-		res.addDetail("test", &Result{Status: StatusUp})
+		require.NotPanics(t, func() {
+			res.addDetail("test", &Result{Status: StatusUp})
+		})
+
+		require.NotNil(t, res.Details, "Details map should be initialized")
+		require.Len(t, res.Details, 1)
 	})
-
-	require.NotNil(t, res.Details, "Details map should be initialized")
-	require.Len(t, res.Details, 1)
 }
