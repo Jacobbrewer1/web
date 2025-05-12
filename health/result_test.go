@@ -126,6 +126,7 @@ func TestResult_AddDetail(t *testing.T) {
 	t.Parallel()
 
 	t.Run("AddDetail with nil Result", func(t *testing.T) {
+		t.Parallel()
 		res := new(Result)
 		res.mtx = new(sync.RWMutex)
 
