@@ -152,9 +152,11 @@ func BenchmarkReplaceAttrs(b *testing.B) {
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
 			b.ReportAllocs()
-			for range b.N {
-				replaceAttrs(nil, bm.attr)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					replaceAttrs(nil, bm.attr)
+				}
+			})
 		})
 	}
 }
