@@ -14,7 +14,7 @@ require (
 	github.com/jacobbrewer1/uhttp v0.0.12
 	github.com/jacobbrewer1/vaulty v0.1.15-0.20250422083501-a48cb7ba777e
 	github.com/jacobbrewer1/workerpool v0.0.4
-	github.com/nats-io/nats.go v1.42.0
+	github.com/nats-io/nats.go v1.43.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/serialx/hashring v0.0.0-20200727003509-22c0c7ab6b1b
 	github.com/spf13/viper v1.20.1
