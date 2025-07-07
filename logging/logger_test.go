@@ -9,34 +9,41 @@ import (
 )
 
 func TestNewLogger(t *testing.T) {
-	buf := new(bytes.Buffer)
-	l := NewLoggerWithWriter(buf, WithAppName("test"), WithComponent("test-component"))
-	l.Info("test")
+	t.Parallel()
 
-	got := buf.String()
+	t.Run("default logger", func(t *testing.T) {
+		t.Parallel()
+		buf := new(bytes.Buffer)
+		l := NewLoggerWithWriter(buf, WithAppName("test"), WithComponent("test-component"))
+		l.Info("test")
 
-	require.Contains(t, got, `"app":"test"`)
-	require.Contains(t, got, `"component":"test-component"`)
-	require.Contains(t, got, `"level":"INFO"`)
-}
+		got := buf.String()
 
-func TestNewLogger_With(t *testing.T) {
-	buf := new(bytes.Buffer)
-	l := NewLoggerWithWriter(buf, WithAppName("test"), WithComponent("test-component"))
-	l = l.With(
-		slog.String(KeyHandler, "test-handler"),
-	)
-	l.Info("test")
+		require.Contains(t, got, `"app":"test"`)
+		require.Contains(t, got, `"component":"test-component"`)
+		require.Contains(t, got, `"level":"INFO"`)
+	})
 
-	got := buf.String()
+	t.Run("with custom attributes", func(t *testing.T) {
+		t.Parallel()
+		buf := new(bytes.Buffer)
+		l := NewLoggerWithWriter(buf, WithAppName("test"), WithComponent("test-component"))
+		l = l.With(
+			slog.String(KeyHandler, "test-handler"),
+		)
+		l.Info("test")
 
-	require.Contains(t, got, `"app":"test"`)
-	require.Contains(t, got, `"component":"test-component"`)
-	require.Contains(t, got, `"level":"INFO"`)
-	require.Contains(t, got, `"handler":"test-handler"`)
+		got := buf.String()
+
+		require.Contains(t, got, `"app":"test"`)
+		require.Contains(t, got, `"component":"test-component"`)
+		require.Contains(t, got, `"level":"INFO"`)
+		require.Contains(t, got, `"handler":"test-handler"`)
+	})
 }
 
 func TestDuplicateKey(t *testing.T) {
+	t.Parallel()
 	buf := new(bytes.Buffer)
 	l := NewLoggerWithWriter(buf, WithAppName("test"), WithComponent("test-component"))
 	l = LoggerWithComponent(l, "test-component-2") // This will duplicate the component key

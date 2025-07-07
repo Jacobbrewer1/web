@@ -21,7 +21,6 @@ func compareResult(t *testing.T, expected, actual *Result) {
 	require.Equal(t, expected.Error, actual.Error, "Error mismatch: expected %v, got %v", expected.Error, actual.Error)
 
 	require.Len(t, expected.Details, len(actual.Details), "Details length mismatch: expected %d, got %d", len(expected.Details), len(actual.Details))
-
 	for k := range expected.Details {
 		compareResult(t, expected.Details[k], actual.Details[k])
 	}
