@@ -8,7 +8,7 @@ import (
 
 func Test_FixedHashBucket(t *testing.T) {
 	t.Parallel()
-	
+
 	h := NewFixedHashBucket(2)
 	v := "hello"
 
