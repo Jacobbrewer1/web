@@ -2,20 +2,10 @@ package logging
 
 import (
 	"log/slog"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
-
-func setEnv(t *testing.T, key, val string) {
-	t.Helper()
-
-	t.Setenv(key, val)
-	t.Cleanup(func() {
-		require.NoError(t, os.Unsetenv(key))
-	})
-}
 
 func TestNewLoggingConfig(t *testing.T) {
 	tests := []struct {
@@ -81,7 +71,7 @@ func TestNewLoggingConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.env != nil {
 				for k, v := range tt.env {
-					setEnv(t, k, v)
+					t.Setenv(k, v)
 				}
 			}
 

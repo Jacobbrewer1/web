@@ -22,6 +22,9 @@ func compareResult(t *testing.T, expected, actual *Result) {
 
 	require.Len(t, expected.Details, len(actual.Details), "Details length mismatch: expected %d, got %d", len(expected.Details), len(actual.Details))
 
+	if len(expected.Details) != len(actual.Details) {
+		t.Fatalf("Details length mismatch: expected %d, got %d", len(expected.Details), len(actual.Details))
+	}
 	for k := range expected.Details {
 		compareResult(t, expected.Details[k], actual.Details[k])
 	}
