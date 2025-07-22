@@ -53,8 +53,11 @@ var (
 	ErrNoHostname = errors.New("no hostname provided")
 )
 
+// ContextRunnable defines a function type for tasks that can be run with a context.
+type ContextRunnable = func(context.Context)
+
 // AsyncTaskFunc defines a function type for asynchronous tasks.
-type AsyncTaskFunc = func(context.Context)
+type AsyncTaskFunc = ContextRunnable
 
 // StartOption defines a function type for configuring the application during startup.
 type StartOption = func(*App) error
@@ -73,13 +76,13 @@ func WithViperConfig() StartOption {
 }
 
 // WithConfigWatchers is a StartOption that registers functions to be called when the config file changes.
-func WithConfigWatchers(fn ...func()) StartOption {
+func WithConfigWatchers(fn ...ContextRunnable) StartOption {
 	return func(a *App) error {
 		vip := a.Viper()
 		vip.OnConfigChange(func(e fsnotify.Event) {
 			a.l.Info("Config file changed", slog.String(logging.KeyFile, e.Name))
 			for _, f := range fn {
-				f()
+				f(a.baseCtx)
 			}
 		})
 		vip.WatchConfig()
