@@ -12,12 +12,8 @@ import (
 
 func TestWithViperConfig(t *testing.T) {
 	t.Run("golden", func(t *testing.T) {
-		file, err := os.CreateTemp("", "viper-config*.json")
+		file, err := os.CreateTemp(t.TempDir(), "viper-config*.json")
 		require.NoError(t, err, "expected no error when creating temp file for viper config")
-		t.Cleanup(func() {
-			err := os.Remove(file.Name())
-			require.NoError(t, err, "expected no error when removing temp file")
-		})
 
 		t.Setenv("CONFIG_LOCATION", file.Name())
 
@@ -80,12 +76,8 @@ func TestWithViperConfig(t *testing.T) {
 }
 
 func TestWithConfigWatchers(t *testing.T) {
-	file, err := os.CreateTemp("", "viper-config*.json")
+	file, err := os.CreateTemp(t.TempDir(), "viper-config*.json")
 	require.NoError(t, err, "expected no error when creating temp file for viper config")
-	t.Cleanup(func() {
-		err := os.Remove(file.Name())
-		require.NoError(t, err, "expected no error when removing temp file")
-	})
 
 	_, err = file.WriteString(`{
   "vault": {
