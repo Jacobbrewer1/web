@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -114,12 +115,12 @@ func TestWithConfigWatchers(t *testing.T) {
 
 	a := newTestApp(t)
 
-	configWatcherCalled := false
+	var configWatcherCalled int32
 	err = a.Start(WithViperConfig(), WithConfigWatchers(func(ctx context.Context) {
-		configWatcherCalled = true
+		atomic.StoreInt32(&configWatcherCalled, 1)
 	}))
 	require.NoError(t, err, "expected no error when starting app with viper config and watchers")
-	require.False(t, configWatcherCalled, "expected config watcher not to be called immediately")
+	require.Equal(t, int32(0), atomic.LoadInt32(&configWatcherCalled), "expected config watcher not to be called immediately")
 
 	// Simulate a config change by writing to the file
 	err = file.Truncate(0)
@@ -147,6 +148,6 @@ func TestWithConfigWatchers(t *testing.T) {
 	require.NoError(t, err, "expected no error when writing to config file")
 
 	require.Eventually(t, func() bool {
-		return configWatcherCalled
+		return atomic.LoadInt32(&configWatcherCalled) == 1
 	}, 3*time.Second, 100*time.Millisecond, "expected config watcher to be called after config change")
 }
