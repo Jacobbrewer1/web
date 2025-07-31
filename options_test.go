@@ -122,6 +122,10 @@ func TestWithConfigWatchers(t *testing.T) {
 	require.False(t, configWatcherCalled, "expected config watcher not to be called immediately")
 
 	// Simulate a config change by writing to the file
+	err = file.Truncate(0)
+	require.NoError(t, err, "expected no error when truncating config file")
+	_, err = file.Seek(0, 0)
+	require.NoError(t, err, "expected no error when seeking to the beginning of config file")
 	_, err = file.WriteString(`{
   "vault": {
     "address": "https://vault.domain.com",
