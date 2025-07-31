@@ -48,6 +48,7 @@ func TestWithViperConfig(t *testing.T) {
     "network": "tcp"
   }
 }`)
+		require.NoError(t, err, "expected no error when writing to temp file for viper config")
 
 		a := newTestApp(t)
 		err = a.Start(WithViperConfig())
@@ -110,6 +111,7 @@ func TestWithConfigWatchers(t *testing.T) {
     "network": "tcp"
   }
 }`)
+	require.NoError(t, err, "expected no error when writing to temp file for viper config")
 
 	t.Setenv("CONFIG_LOCATION", file.Name())
 
