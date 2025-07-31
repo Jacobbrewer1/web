@@ -64,14 +64,14 @@ func (d *dedupeHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 		}
 
 		// Check if there are any duplicates in new attrs
-		seen := make(map[string]bool, len(attrs))
+		seen := make(map[string]struct{}, len(attrs))
 		hasDuplicates := false
 		for _, attr := range attrs {
-			if seen[attr.Key] {
+			if _, exists := seen[attr.Key]; exists {
 				hasDuplicates = true
 				break
 			}
-			seen[attr.Key] = true
+			seen[attr.Key] = struct{}{}
 		}
 
 		if !hasDuplicates {
