@@ -14,7 +14,7 @@ type loggingConfig struct {
 // newLoggingConfig creates and initializes a new loggingConfig instance.
 func newLoggingConfig() *loggingConfig {
 	logCfg := &loggingConfig{
-		Level: slog.LevelDebug,
+		Level: slog.LevelInfo,
 	}
 
 	_ = env.Parse(logCfg) // We don't care about the error here

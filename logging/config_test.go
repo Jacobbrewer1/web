@@ -62,7 +62,7 @@ func TestNewLoggingConfig(t *testing.T) {
 				"LOG_LEVEL": "invalid",
 			},
 			want: &loggingConfig{
-				Level: slog.LevelDebug,
+				Level: slog.LevelInfo,
 			},
 		},
 	}
