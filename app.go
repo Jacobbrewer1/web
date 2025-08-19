@@ -19,7 +19,7 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	listersv1 "k8s.io/client-go/listers/core/v1"
-	kubeCache "k8s.io/client-go/tools/cache"
+	k8scache "k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/leaderelection"
 
 	"github.com/jacobbrewer1/goredis"
@@ -28,8 +28,8 @@ import (
 	"github.com/jacobbrewer1/vaulty/vsql"
 	"github.com/jacobbrewer1/web/cache"
 	"github.com/jacobbrewer1/web/logging"
+	pkgsync "github.com/jacobbrewer1/web/sync"
 	"github.com/jacobbrewer1/web/version"
-	"github.com/jacobbrewer1/workerpool"
 )
 
 const (
@@ -112,19 +112,19 @@ type (
 		kubernetesInformerFactory informers.SharedInformerFactory
 
 		// podInformer is an informer for Kubernetes Pod objects.
-		podInformer kubeCache.SharedIndexInformer
+		podInformer k8scache.SharedIndexInformer
 
 		// podLister is a lister for Kubernetes Pod objects.
 		podLister listersv1.PodLister
 
 		// secretInformer is an informer for Kubernetes Secret objects.
-		secretInformer kubeCache.SharedIndexInformer
+		secretInformer k8scache.SharedIndexInformer
 
 		// secretLister is a lister for Kubernetes Secret objects.
 		secretLister listersv1.SecretLister
 
 		// configMapInformer is an informer for Kubernetes ConfigMap objects.
-		configMapInformer kubeCache.SharedIndexInformer
+		configMapInformer k8scache.SharedIndexInformer
 
 		// configMapLister is a lister for Kubernetes ConfigMap objects.
 		configMapLister listersv1.ConfigMapLister
@@ -138,8 +138,8 @@ type (
 		// redisPool is the redis pool for the application.
 		redisPool goredis.Pool
 
-		// workerPool is the worker pool that can execute tasks concurrently.
-		workerPool workerpool.Pool
+		// workerPools is a map of worker pools for the application, keyed by pool name.
+		workerPools sync.Map
 
 		// indefiniteAsyncTasks is the list of indefinite async tasks for the application.
 		indefiniteAsyncTasks sync.Map
@@ -387,10 +387,13 @@ func (a *App) Shutdown() {
 			a.serviceEndpointHashBucket.Shutdown()
 		}
 
-		// Stop the worker pool if it exists.
-		if a.workerPool != nil {
-			a.workerPool.Stop()
-		}
+		a.workerPools.Range(func(k any, v any) bool {
+			if wp, ok := v.(pkgsync.WorkerPool); ok {
+				a.l.Info("stopping worker pool", "name", k)
+				wp.Close()
+			}
+			return true
+		})
 
 		// Close the NATS client if it exists.
 		if a.natsClient != nil {
@@ -467,10 +470,6 @@ func (a *App) LeaderChange() <-chan struct{} {
 
 // StartServer starts a new server with the given name and http.Server.
 func (a *App) StartServer(name string, srv *http.Server) error {
-	if _, found := a.servers.Load(name); found {
-		return fmt.Errorf("server %s already exists", name)
-	}
-
 	// If the server handler is gorilla mux, check the not found handler and method not allowed handler
 	if muxRouter, ok := srv.Handler.(*mux.Router); ok {
 		if muxRouter.NotFoundHandler == nil {
@@ -483,7 +482,9 @@ func (a *App) StartServer(name string, srv *http.Server) error {
 		}
 	}
 
-	a.servers.Store(name, srv)
+	if _, loaded := a.servers.LoadOrStore(name, srv); loaded {
+		return fmt.Errorf("server %s already exists", name)
+	}
 	a.startServer(name, srv)
 	return nil
 }
@@ -516,13 +517,21 @@ func (a *App) RedisPool() goredis.Pool {
 	return a.redisPool
 }
 
-// WorkerPool returns the worker pool for the application.
-func (a *App) WorkerPool() workerpool.Pool {
-	if a.workerPool == nil {
-		a.l.Error("worker pool has not been registered")
-		panic("worker pool has not been registered")
+// WorkerPool returns the application worker pool, if one exists.
+func (a *App) WorkerPool(name string) pkgsync.WorkerPool {
+	v, ok := a.workerPools.Load(name)
+	if !ok {
+		a.l.Error("worker pool has not been registered", "name", name)
+		panic(fmt.Sprintf("worker pool '%s' has not been registered", name))
 	}
-	return a.workerPool
+
+	wp, ok := v.(pkgsync.WorkerPool)
+	if !ok {
+		a.l.Error("worker pool is not of type pkgsync.WorkerPool", "name", name)
+		panic(fmt.Sprintf("worker pool '%s' is not of type pkgsync.WorkerPool", name))
+	}
+
+	return wp
 }
 
 // NatsClient returns the NATS client for the application.
@@ -609,7 +618,7 @@ func (a *App) PodLister() listersv1.PodLister {
 }
 
 // PodInformer returns the pod informer for the application.
-func (a *App) PodInformer() kubeCache.SharedIndexInformer {
+func (a *App) PodInformer() k8scache.SharedIndexInformer {
 	if a.podInformer == nil {
 		a.l.Error("pod informer has not been registered")
 		panic("pod informer has not been registered")
@@ -636,7 +645,7 @@ func (a *App) SecretLister() listersv1.SecretLister {
 }
 
 // SecretInformer returns the secret informer for the application.
-func (a *App) SecretInformer() kubeCache.SharedIndexInformer {
+func (a *App) SecretInformer() k8scache.SharedIndexInformer {
 	if a.secretInformer == nil {
 		a.l.Error("secret informer has not been registered")
 		panic("secret informer has not been registered")
@@ -654,7 +663,7 @@ func (a *App) ConfigMapLister() listersv1.ConfigMapLister {
 }
 
 // ConfigMapInformer returns the config map informer for the application.
-func (a *App) ConfigMapInformer() kubeCache.SharedIndexInformer {
+func (a *App) ConfigMapInformer() k8scache.SharedIndexInformer {
 	if a.configMapInformer == nil {
 		a.l.Error("config map informer has not been registered")
 		panic("config map informer has not been registered")

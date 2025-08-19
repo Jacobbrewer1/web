@@ -29,7 +29,7 @@ import (
 	"github.com/jacobbrewer1/web/health"
 	"github.com/jacobbrewer1/web/k8s"
 	"github.com/jacobbrewer1/web/logging"
-	"github.com/jacobbrewer1/workerpool"
+	pkgsync "github.com/jacobbrewer1/web/sync"
 )
 
 const (
@@ -303,14 +303,19 @@ func WithMetricsEnabled(metricsEnabled bool) StartOption {
 	}
 }
 
-// WithWorkerPool is a StartOption that sets up the worker pool for the application.
-func WithWorkerPool() StartOption {
+// WithWorkerPool configures the app to instantiate a worker pool for concurrent processing of tasks.
+func WithWorkerPool(name string, size, backlog uint) StartOption {
 	return func(a *App) error {
-		wp := workerpool.New(
-			workerpool.WithDelayedStart(),
+		a.l.Info("creating worker pool",
+			"size", size,
+			"name", name,
 		)
-
-		a.workerPool = wp
+		if _, loaded := a.workerPools.LoadOrStore(
+			name,
+			pkgsync.NewWorkerPool(a.baseCtx, name, size, backlog),
+		); loaded {
+			return fmt.Errorf("worker pool of name %q already exists", name)
+		}
 		return nil
 	}
 }
