@@ -33,7 +33,9 @@ func Test_WorkerPool(t *testing.T) {
 					wp.SubmitBlocking(func(ctx context.Context) {
 						// Use crypto/rand for secure random number generation
 						n, err := rand.Int(rand.Reader, big.NewInt(100))
-						require.NoError(t, err, "failed to generate random number")
+						if err != nil {
+							t.Errorf("error occurred while submitting blocking: %v", err)
+						}
 						time.Sleep(time.Duration(n.Int64()) * time.Millisecond)
 						tasksProcessed.Inc()
 					})
