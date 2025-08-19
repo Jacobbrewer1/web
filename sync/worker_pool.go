@@ -142,7 +142,7 @@ func (w *workerPool) SubmitBlocking(task AsyncTaskFunc) {
 		metricWorkerPoolActiveWorkers.With(w.labels).Inc()
 
 		// Initialise a timer which will stop the worker after a period of inactivity.
-		timer := time.NewTimer(10 * time.Second)
+		timer := time.NewTimer(workerPoolTimeout)
 		defer timer.Stop()
 
 		// Attempt to pull a task to execute. To prevent thrashing goroutines, the worker will try to execute as much
