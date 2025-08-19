@@ -13,7 +13,6 @@ require (
 	github.com/jacobbrewer1/goredis v0.1.7
 	github.com/jacobbrewer1/uhttp v0.0.12
 	github.com/jacobbrewer1/vaulty v0.1.15-0.20250422083501-a48cb7ba777e
-	github.com/jacobbrewer1/workerpool v0.0.4
 	github.com/nats-io/nats.go v1.44.0
 	github.com/prometheus/client_golang v1.23.0
 	github.com/serialx/hashring v0.0.0-20200727003509-22c0c7ab6b1b

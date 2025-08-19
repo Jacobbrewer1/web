@@ -139,9 +139,6 @@ github.com/jacobbrewer1/uhttp/common
 ## explicit; go 1.24
 github.com/jacobbrewer1/vaulty
 github.com/jacobbrewer1/vaulty/vsql
-# github.com/jacobbrewer1/workerpool v0.0.4
-## explicit; go 1.23
-github.com/jacobbrewer1/workerpool
 # github.com/jmoiron/sqlx v1.4.0
 ## explicit; go 1.10
 github.com/jmoiron/sqlx
