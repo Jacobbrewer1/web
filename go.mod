@@ -17,7 +17,7 @@ require (
 	github.com/prometheus/client_golang v1.23.0
 	github.com/serialx/hashring v0.0.0-20200727003509-22c0c7ab6b1b
 	github.com/spf13/viper v1.20.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	go.uber.org/atomic v1.9.0
 	go.uber.org/multierr v1.11.0
 	k8s.io/api v0.33.4
