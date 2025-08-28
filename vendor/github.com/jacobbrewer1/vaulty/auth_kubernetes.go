@@ -10,6 +10,7 @@ import (
 	auth "github.com/hashicorp/vault/api/auth/kubernetes"
 )
 
+// kubernetesLogin authenticates with Vault using the Kubernetes auth method.
 func kubernetesLogin(client *hashiVault.Client, role string, token auth.LoginOption) (*hashiVault.Secret, error) {
 	k8sAuth, err := auth.NewKubernetesAuth(
 		role,

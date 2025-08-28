@@ -8,9 +8,10 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	hashiVault "github.com/hashicorp/vault/api"
-	"github.com/jacobbrewer1/vaulty"
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
+
+	"github.com/jacobbrewer1/vaulty"
 )
 
 // ConnectDB establishes a connection to the database using the provided Vault client and configuration.
@@ -104,7 +105,7 @@ func openDBConnection(ctx context.Context, connectionString string) (*sqlx.DB, e
 }
 
 func connectionStringFromViperAndVaultSecret(vip *viper.Viper, secrets *hashiVault.Secret) string {
-	connectionString := fmt.Sprintf("%s:%s@tcp(%s)/%s",
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true&multiStatements=true",
 		secrets.Data[secretKeyDatabaseUsername],
 		secrets.Data[secretKeyDatabasePassword],
 		vip.GetString(configKeyDatabaseHost),

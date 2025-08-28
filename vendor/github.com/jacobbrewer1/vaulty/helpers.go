@@ -6,6 +6,7 @@ import (
 	hashiVault "github.com/hashicorp/vault/api"
 )
 
+// CipherTextFromSecret extracts the ciphertext from a Vault secret.
 func CipherTextFromSecret(transitEncryptSecret *hashiVault.Secret) string {
 	switch {
 	case transitEncryptSecret == nil:
@@ -24,6 +25,7 @@ func CipherTextFromSecret(transitEncryptSecret *hashiVault.Secret) string {
 	return ct
 }
 
+// uintToInt converts a uint to an int, returning an error if the conversion would overflow.
 func uintToInt(u uint) (int, error) {
 	if u > uint(maxInt) {
 		return 0, fmt.Errorf("uint value %d overflows int", u)

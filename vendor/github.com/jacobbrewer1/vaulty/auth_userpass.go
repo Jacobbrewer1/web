@@ -10,6 +10,7 @@ import (
 	auth "github.com/hashicorp/vault/api/auth/userpass"
 )
 
+// userPassLogin authenticates with Vault using the Userpass auth method.
 func userPassLogin(client *hashiVault.Client, username, password string) (*hashiVault.Secret, error) {
 	// WARNING: A plaintext password like this is obviously insecure.
 	// See the hashicorp/vault-examples repo for full examples of how to securely
