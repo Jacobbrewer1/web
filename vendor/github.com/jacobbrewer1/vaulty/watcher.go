@@ -9,6 +9,7 @@ import (
 	hashiVault "github.com/hashicorp/vault/api"
 )
 
+// monitorWatcher monitors the renewal of a Vault token and returns a channel
 func monitorWatcher(ctx context.Context, l *slog.Logger, token string, watcher *hashiVault.LifetimeWatcher) (renewResult, error) {
 	for {
 		select {
@@ -36,6 +37,7 @@ func monitorWatcher(ctx context.Context, l *slog.Logger, token string, watcher *
 	}
 }
 
+// handleWatcherResult processes the result of the watcher and executes
 func handleWatcherResult(l *slog.Logger, result renewResult, onExpire ...func()) error {
 	switch {
 	case result&exitRequested != 0:

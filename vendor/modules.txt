@@ -47,7 +47,7 @@ github.com/go-openapi/jsonreference/internal
 # github.com/go-openapi/swag v0.23.0
 ## explicit; go 1.20
 github.com/go-openapi/swag
-# github.com/go-sql-driver/mysql v1.9.2
+# github.com/go-sql-driver/mysql v1.9.3
 ## explicit; go 1.21.0
 github.com/go-sql-driver/mysql
 # github.com/go-viper/mapstructure/v2 v2.4.0
@@ -105,8 +105,8 @@ github.com/hashicorp/go-secure-stdlib/strutil
 # github.com/hashicorp/go-sockaddr v1.0.2
 ## explicit
 github.com/hashicorp/go-sockaddr
-# github.com/hashicorp/hcl v1.0.0
-## explicit
+# github.com/hashicorp/hcl v1.0.1-vault-7
+## explicit; go 1.15
 github.com/hashicorp/hcl
 github.com/hashicorp/hcl/hcl/ast
 github.com/hashicorp/hcl/hcl/parser
@@ -116,17 +116,17 @@ github.com/hashicorp/hcl/hcl/token
 github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
-# github.com/hashicorp/vault/api v1.16.0
-## explicit; go 1.21
+# github.com/hashicorp/vault/api v1.20.0
+## explicit; go 1.23.0
 github.com/hashicorp/vault/api
-# github.com/hashicorp/vault/api/auth/approle v0.9.0
-## explicit; go 1.21
+# github.com/hashicorp/vault/api/auth/approle v0.10.0
+## explicit; go 1.23.0
 github.com/hashicorp/vault/api/auth/approle
-# github.com/hashicorp/vault/api/auth/kubernetes v0.9.0
-## explicit; go 1.21
+# github.com/hashicorp/vault/api/auth/kubernetes v0.10.0
+## explicit; go 1.23.0
 github.com/hashicorp/vault/api/auth/kubernetes
-# github.com/hashicorp/vault/api/auth/userpass v0.9.0
-## explicit; go 1.21
+# github.com/hashicorp/vault/api/auth/userpass v0.10.0
+## explicit; go 1.23.0
 github.com/hashicorp/vault/api/auth/userpass
 # github.com/jacobbrewer1/goredis v0.1.7
 ## explicit; go 1.24
@@ -135,7 +135,7 @@ github.com/jacobbrewer1/goredis
 ## explicit; go 1.24
 github.com/jacobbrewer1/uhttp
 github.com/jacobbrewer1/uhttp/common
-# github.com/jacobbrewer1/vaulty v0.1.15-0.20250422083501-a48cb7ba777e
+# github.com/jacobbrewer1/vaulty v0.1.15-0.20250828101647-101bf643f4c2
 ## explicit; go 1.24
 github.com/jacobbrewer1/vaulty
 github.com/jacobbrewer1/vaulty/vsql

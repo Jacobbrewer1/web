@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/vault/api/auth/approle"
 )
 
+// appRoleLogin authenticates with Vault using the AppRole auth method.
 func appRoleLogin(client *hashiVault.Client, roleID, secretID string) (*hashiVault.Secret, error) {
 	appRoleSecretID := &approle.SecretID{
 		FromString: secretID,

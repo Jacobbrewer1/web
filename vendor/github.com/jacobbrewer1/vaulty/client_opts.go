@@ -10,6 +10,7 @@ import (
 	kubernetesAuth "github.com/hashicorp/vault/api/auth/kubernetes"
 )
 
+// ClientOption is a function that configures the client.
 type ClientOption func(c *client) error
 
 // WithContext sets the context for the client.

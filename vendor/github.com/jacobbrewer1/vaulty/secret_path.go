@@ -9,6 +9,7 @@ import (
 	hashiVault "github.com/hashicorp/vault/api"
 )
 
+// SecretPath represents a path to a secret in Vault.
 type SecretPath struct {
 	client  Client
 	mount   string
@@ -17,6 +18,7 @@ type SecretPath struct {
 	version uint
 }
 
+// path returns the path of the secret.
 func (c *SecretPath) path() string {
 	if c.prefix != "" {
 		return fmt.Sprintf("%s/%s", c.prefix, c.name)
@@ -25,6 +27,7 @@ func (c *SecretPath) path() string {
 	return c.name
 }
 
+// pathWithType returns the path with the specified type.
 func (c *SecretPath) pathWithType(k string) string {
 	if c.prefix != "" {
 		return fmt.Sprintf("%s/%s/%s", c.prefix, k, c.name)
@@ -33,6 +36,7 @@ func (c *SecretPath) pathWithType(k string) string {
 	return fmt.Sprintf("%s/%s", k, c.name)
 }
 
+// GetKvSecretV2 retrieves a versioned secret from the specified path.
 func (c *SecretPath) GetKvSecretV2(ctx context.Context) (*hashiVault.KVSecret, error) {
 	version, err := uintToInt(c.version)
 	if err != nil {
@@ -48,6 +52,7 @@ func (c *SecretPath) GetKvSecretV2(ctx context.Context) (*hashiVault.KVSecret, e
 	return secret, nil
 }
 
+// GetSecret retrieves a secret from the specified path.
 func (c *SecretPath) GetSecret(ctx context.Context) (*hashiVault.Secret, error) {
 	secret, err := c.client.Client().Logical().ReadWithContext(ctx, c.path())
 	if err != nil {
@@ -58,6 +63,7 @@ func (c *SecretPath) GetSecret(ctx context.Context) (*hashiVault.Secret, error) 
 	return secret, nil
 }
 
+// TransitEncrypt encrypts the given data using the transit engine.
 func (c *SecretPath) TransitEncrypt(ctx context.Context, data string) (*hashiVault.Secret, error) {
 	plaintext := base64.StdEncoding.EncodeToString([]byte(data))
 
@@ -72,6 +78,7 @@ func (c *SecretPath) TransitEncrypt(ctx context.Context, data string) (*hashiVau
 	return encryptData, nil
 }
 
+// TransitDecrypt decrypts the given data using the transit engine.
 func (c *SecretPath) TransitDecrypt(ctx context.Context, data string) (string, error) {
 	// Decrypt the data using the transit engine
 	decryptData, err := c.client.Client().Logical().WriteWithContext(ctx, c.pathWithType(pathKeyTransitDecrypt), map[string]any{

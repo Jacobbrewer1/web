@@ -21,10 +21,12 @@ var (
 	ErrInvalidAuth = errors.New("auth method is nil")
 )
 
+// ClientHandler is an interface that provides access to the Vault client.
 type ClientHandler interface {
 	Client() *hashiVault.Client
 }
 
+// Client is an interface that provides access to the Vault client and its secrets.
 type Client interface {
 	ClientHandler
 
@@ -33,10 +35,14 @@ type Client interface {
 }
 
 type (
+	// RenewalFunc is a function that renews the lease for a secret.
 	RenewalFunc = func() (*hashiVault.Secret, error)
-	loginFunc   = func(v *hashiVault.Client) (*hashiVault.Secret, error)
+
+	// loginFunc is a function that logs in to Vault and returns the secret.
+	loginFunc = func(v *hashiVault.Client) (*hashiVault.Secret, error)
 )
 
+// client is a struct that implements the Client interface.
 type client struct {
 	ctx       context.Context
 	l         *slog.Logger
@@ -49,6 +55,7 @@ type client struct {
 	authCreds *hashiVault.Secret
 }
 
+// NewClient creates a new Vault client with the given options.
 func NewClient(opts ...ClientOption) (Client, error) {
 	c := &client{
 		ctx:       context.Background(),
@@ -93,6 +100,7 @@ func NewClient(opts ...ClientOption) (Client, error) {
 	return c, nil
 }
 
+// renewAuthInfo renews the authentication information for the client.
 func (c *client) renewAuthInfo() {
 	err := RenewLease(c.ctx, c.l, c, "auth", c.authCreds, func() (*hashiVault.Secret, error) {
 		authInfo, err := c.auth(c.v)
@@ -110,10 +118,12 @@ func (c *client) renewAuthInfo() {
 	}
 }
 
+// Client returns the Vault client.
 func (c *client) Client() *hashiVault.Client {
 	return c.v
 }
 
+// Path returns the secret path for the given name.
 func (c *client) Path(name string, opts ...PathOption) Repository {
 	p := &SecretPath{
 		client: c,

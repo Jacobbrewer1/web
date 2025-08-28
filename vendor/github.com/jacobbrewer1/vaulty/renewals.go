@@ -71,6 +71,7 @@ func RenewLease(
 	}
 }
 
+// leaseRenew is a helper function to renew the lease of a secret.
 func leaseRenew(
 	ctx context.Context,
 	l *slog.Logger,
