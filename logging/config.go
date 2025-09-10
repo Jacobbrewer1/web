@@ -8,7 +8,7 @@ import (
 
 // loggingConfig represents the configuration for logging.
 type loggingConfig struct {
-	Level slog.Level `env:"LOG_LEVEL" envDefault:"debug"`
+	Level slog.Level `env:"LOG_LEVEL"`
 }
 
 // newLoggingConfig creates and initializes a new loggingConfig instance.
