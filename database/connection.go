@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -18,8 +19,8 @@ const (
 	newDbPingInterval = 500 * time.Millisecond
 )
 
-// MySQLConnectionStringFromVaultSecret constructs a MySQL connection string from the given parameters and Vault secret data.
-func MySQLConnectionStringFromVaultSecret(
+// MySQLConnectionString constructs a MySQL connection string.
+func MySQLConnectionString(
 	username, password, host string, port int, dbName string,
 ) string {
 	return fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true&multiStatements=true",

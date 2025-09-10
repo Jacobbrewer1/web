@@ -122,7 +122,7 @@ func WithDatabaseFromVault() StartOption {
 			return fmt.Errorf("error getting secrets from vault: %w", err)
 		}
 
-		connectionStr := database.MySQLConnectionStringFromVaultSecret(
+		connectionStr := database.MySQLConnectionString(
 			utils.CastWithDefault(vs.Data["username"], ""),
 			utils.CastWithDefault(vs.Data["password"], ""),
 			vip.GetString("database.host"),
@@ -158,7 +158,7 @@ func WithDatabaseFromVault() StartOption {
 						return nil, fmt.Errorf("error getting new database credentials from vault: %w", err)
 					}
 
-					newConnectionStr := database.MySQLConnectionStringFromVaultSecret(
+					newConnectionStr := database.MySQLConnectionString(
 						utils.CastWithDefault(newVS.Data["username"], ""),
 						utils.CastWithDefault(newVS.Data["password"], ""),
 						vip.GetString("database.host"),
