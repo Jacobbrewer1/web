@@ -11,6 +11,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
+	hashivault "github.com/hashicorp/vault/api"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/spf13/viper"
@@ -23,13 +24,14 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/jacobbrewer1/goredis"
-	"github.com/jacobbrewer1/vaulty"
-	"github.com/jacobbrewer1/vaulty/vsql"
 	"github.com/jacobbrewer1/web/cache"
+	"github.com/jacobbrewer1/web/database"
 	"github.com/jacobbrewer1/web/health"
 	"github.com/jacobbrewer1/web/k8s"
 	"github.com/jacobbrewer1/web/logging"
 	pkgsync "github.com/jacobbrewer1/web/sync"
+	"github.com/jacobbrewer1/web/utils"
+	"github.com/jacobbrewer1/web/vault"
 )
 
 const (
@@ -112,24 +114,77 @@ func WithDatabaseFromVault() StartOption {
 
 		vs, err := vc.Path(
 			vip.GetString("vault.database.role"),
-			vaulty.WithPrefix(vip.GetString("vault.database.path")),
+			vault.WithPrefix(vip.GetString("vault.database.path")),
 		).GetSecret(a.baseCtx)
-		if errors.Is(err, vaulty.ErrSecretNotFound) {
+		if errors.Is(err, vault.ErrSecretNotFound) {
 			return fmt.Errorf("secrets not found in vault: %s", vip.GetString("vault.database.path"))
 		} else if err != nil {
 			return fmt.Errorf("error getting secrets from vault: %w", err)
 		}
 
-		a.db, err = vsql.ConnectDB(
-			a.baseCtx,
-			logging.LoggerWithComponent(a.l, "database_connector"),
-			vc,
-			vip,
-			vs,
+		connectionStr := database.MySQLConnectionStringFromVaultSecret(
+			utils.CastWithDefault(vs.Data["username"], ""),
+			utils.CastWithDefault(vs.Data["password"], ""),
+			vip.GetString("database.host"),
+			vip.GetInt("database.port"),
+			vip.GetString("database.name"),
 		)
+
+		db, err := database.OpenDBConnection(a.baseCtx, connectionStr)
 		if err != nil {
-			return fmt.Errorf("error creating database connector: %w", err)
+			return fmt.Errorf("error opening database connection: %w", err)
 		}
+
+		vaultDB := database.NewVaultDB(db)
+
+		a.l.Info("database connection established")
+		a.db = vaultDB
+
+		go func() {
+			if err := vault.RenewLease(
+				a.baseCtx,
+				logging.LoggerWithComponent(a.l, "vault_database_lease_renewer"),
+				vc,
+				"database_connection",
+				vs,
+				func() (*hashivault.Secret, error) {
+					a.l.Warn("vault lease expired, establishing new database connection")
+
+					newVS, err := vc.Path(
+						vip.GetString("vault.database.role"),
+						vault.WithPrefix(vip.GetString("vault.database.path")),
+					).GetSecret(a.baseCtx)
+					if err != nil {
+						return nil, fmt.Errorf("error getting new database credentials from vault: %w", err)
+					}
+
+					newConnectionStr := database.MySQLConnectionStringFromVaultSecret(
+						utils.CastWithDefault(newVS.Data["username"], ""),
+						utils.CastWithDefault(newVS.Data["password"], ""),
+						vip.GetString("database.host"),
+						vip.GetInt("database.port"),
+						vip.GetString("database.name"),
+					)
+
+					newDB, err := database.OpenDBConnection(a.baseCtx, newConnectionStr)
+					if err != nil {
+						return nil, fmt.Errorf("error opening new database connection: %w", err)
+					}
+
+					a.l.Info("new database connection established, replacing old connection")
+
+					if err := vaultDB.ReplaceDB(a.baseCtx, newDB); err != nil {
+						return nil, fmt.Errorf("error replacing database connection: %w", err)
+					}
+
+					a.l.Info("database connection renewed successfully")
+					return newVS, nil
+				},
+			); err != nil {
+				a.l.Error("error renewing database lease", slog.String("error", err.Error()))
+			}
+		}()
+
 		return nil
 	}
 }
@@ -266,7 +321,7 @@ func WithRedisPool() StartOption {
 
 		keydbPath := vip.GetString("vault.keydb.name")
 		keydbSecret, err := vc.Path(keydbPath).GetKvSecretV2(a.baseCtx)
-		if errors.Is(err, vaulty.ErrSecretNotFound) {
+		if errors.Is(err, vault.ErrSecretNotFound) {
 			return fmt.Errorf("keydb secrets not found in vault path: %s", keydbPath)
 		} else if err != nil {
 			return fmt.Errorf("error getting keydb secrets from vault: %w", err)

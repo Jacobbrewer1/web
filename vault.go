@@ -2,13 +2,13 @@ package web
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
+	hashivault "github.com/hashicorp/vault/api"
 	"github.com/spf13/viper"
 
-	"github.com/jacobbrewer1/vaulty"
 	"github.com/jacobbrewer1/web/k8s"
+	"github.com/jacobbrewer1/web/vault"
 )
 
 // defaultVaultAddr is the default address of the Vault server.
@@ -24,22 +24,20 @@ const (
 //
 // Note:
 //   - This is defined as a variable to allow users of the package to override it if needed.
-var VaultClient = func(ctx context.Context, l *slog.Logger, v *viper.Viper) (vaulty.Client, error) {
+var VaultClient = func(ctx context.Context, l *slog.Logger, v *viper.Viper) (vault.Client, error) {
 	addr := v.GetString("vault.address")
 	if addr == "" {
 		addr = defaultVaultAddr
 	}
 
-	vc, err := vaulty.NewClient(
-		vaulty.WithContext(ctx),
-		vaulty.WithAddr(addr),
-		vaulty.WithKubernetesServiceAccountAuth(k8s.ServiceAccountName()),
-		vaulty.WithKvv2Mount(v.GetString("vault.kvv2_mount")),
-		vaulty.WithLogger(l),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error creating vault client: %w", err)
-	}
+	vaultCfg := hashivault.DefaultConfig()
+	vaultCfg.Address = addr
 
-	return vc, nil
+	return vault.NewClient(
+		vault.WithContext(ctx),
+		vault.WithConfig(vaultCfg),
+		vault.WithKubernetesServiceAccountAuth(k8s.ServiceAccountName()),
+		vault.WithKvv2Mount(v.GetString("vault.kvv2_mount")),
+		vault.WithLogger(l),
+	)
 }

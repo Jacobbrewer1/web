@@ -24,11 +24,11 @@ import (
 
 	"github.com/jacobbrewer1/goredis"
 	"github.com/jacobbrewer1/uhttp"
-	"github.com/jacobbrewer1/vaulty"
-	"github.com/jacobbrewer1/vaulty/vsql"
 	"github.com/jacobbrewer1/web/cache"
+	"github.com/jacobbrewer1/web/database"
 	"github.com/jacobbrewer1/web/logging"
 	pkgsync "github.com/jacobbrewer1/web/sync"
+	"github.com/jacobbrewer1/web/vault"
 	"github.com/jacobbrewer1/web/version"
 )
 
@@ -88,7 +88,7 @@ type (
 		vip *viper.Viper
 
 		// vaultClient is the vault client for the application.
-		vaultClient vaulty.Client
+		vaultClient vault.Client
 
 		// metricsEnabled is a flag to enable metrics for the application.
 		metricsEnabled bool
@@ -103,7 +103,7 @@ type (
 		shutdownWg *sync.WaitGroup
 
 		// db is the database for the application.
-		db *vsql.Database
+		db *database.ReplaceableDB
 
 		// kubeClient interacts with the Kubernetes API server.
 		kubeClient kubernetes.Interface
@@ -414,7 +414,7 @@ func (a *App) Logger() *slog.Logger {
 }
 
 // VaultClient returns the vault client for the application.
-func (a *App) VaultClient() vaulty.Client {
+func (a *App) VaultClient() vault.Client {
 	if a.vaultClient == nil {
 		a.l.Error("vault client has not been registered")
 		panic("vault client has not been registered")
@@ -432,7 +432,7 @@ func (a *App) Viper() *viper.Viper {
 }
 
 // DBConn returns the database connection for the application.
-func (a *App) DBConn() *vsql.Database {
+func (a *App) DBConn() *database.ReplaceableDB {
 	if a.db == nil {
 		a.l.Error("database connection has not been registered")
 		panic("database connection has not been registered")

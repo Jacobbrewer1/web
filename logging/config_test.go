@@ -17,7 +17,7 @@ func TestNewLoggingConfig(t *testing.T) {
 			name: "default",
 			env:  nil,
 			want: &loggingConfig{
-				Level: slog.LevelDebug,
+				Level: slog.LevelInfo,
 			},
 		},
 		{
