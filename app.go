@@ -25,10 +25,10 @@ import (
 	"github.com/jacobbrewer1/goredis"
 	"github.com/jacobbrewer1/uhttp"
 	"github.com/jacobbrewer1/web/cache"
+	"github.com/jacobbrewer1/web/database"
 	"github.com/jacobbrewer1/web/logging"
 	pkgsync "github.com/jacobbrewer1/web/sync"
 	"github.com/jacobbrewer1/web/vault"
-	"github.com/jacobbrewer1/web/vault/database"
 	"github.com/jacobbrewer1/web/version"
 )
 

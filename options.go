@@ -24,14 +24,13 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/jacobbrewer1/goredis"
-	"github.com/jacobbrewer1/vaulty"
 	"github.com/jacobbrewer1/web/cache"
+	"github.com/jacobbrewer1/web/database"
 	"github.com/jacobbrewer1/web/health"
 	"github.com/jacobbrewer1/web/k8s"
 	"github.com/jacobbrewer1/web/logging"
 	pkgsync "github.com/jacobbrewer1/web/sync"
 	"github.com/jacobbrewer1/web/vault"
-	"github.com/jacobbrewer1/web/vault/database"
 )
 
 const (
@@ -321,7 +320,7 @@ func WithRedisPool() StartOption {
 
 		keydbPath := vip.GetString("vault.keydb.name")
 		keydbSecret, err := vc.Path(keydbPath).GetKvSecretV2(a.baseCtx)
-		if errors.Is(err, vaulty.ErrSecretNotFound) {
+		if errors.Is(err, vault.ErrSecretNotFound) {
 			return fmt.Errorf("keydb secrets not found in vault path: %s", keydbPath)
 		} else if err != nil {
 			return fmt.Errorf("error getting keydb secrets from vault: %w", err)
