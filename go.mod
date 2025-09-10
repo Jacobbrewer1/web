@@ -10,9 +10,11 @@ require (
 	github.com/gomodule/redigo v1.9.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
+	github.com/hashicorp/vault/api v1.20.0
+	github.com/hashicorp/vault/api/auth/kubernetes v0.10.0
 	github.com/jacobbrewer1/goredis v0.1.7
 	github.com/jacobbrewer1/uhttp v0.0.12
-	github.com/jacobbrewer1/vaulty v0.1.15-0.20250828101647-101bf643f4c2
+	github.com/jmoiron/sqlx v1.4.0
 	github.com/nats-io/nats.go v1.45.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/serialx/hashring v0.0.0-20200727003509-22c0c7ab6b1b
@@ -27,7 +29,6 @@ require (
 )
 
 require (
-	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -53,11 +54,6 @@ require (
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.1-vault-7 // indirect
-	github.com/hashicorp/vault/api v1.20.0 // indirect
-	github.com/hashicorp/vault/api/auth/approle v0.10.0 // indirect
-	github.com/hashicorp/vault/api/auth/kubernetes v0.10.0 // indirect
-	github.com/hashicorp/vault/api/auth/userpass v0.10.0 // indirect
-	github.com/jmoiron/sqlx v1.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
