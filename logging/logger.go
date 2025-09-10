@@ -12,7 +12,7 @@ const (
 	//
 	// This prefix is used in paths to indicate dependencies managed by Gazelle.
 	// It is typically used to trim or process paths in logging or other operations.
-	bazelGazellePrefix = "gazelle~~go_deps~"
+	bazelGazellePrefix = "gazelle++go_deps+"
 )
 
 // NewLogger creates a new logger with the default configuration.

@@ -97,13 +97,13 @@ func TestReplaceAttrs(t *testing.T) {
 		},
 		{
 			name:     "bazel path",
-			attr:     slog.String(slog.SourceKey, "gazelle~~go_deps~com_github_jacobbrewer1_web/app.go"),
+			attr:     slog.String(slog.SourceKey, "gazelle++go_deps+com_github_jacobbrewer1_web/app.go"),
 			expected: "web/app.go",
 		},
 		{
 			name:     "bazel path with line number",
-			attr:     slog.String(slog.SourceKey, "gazelle~~go_deps~com_github_jacobbrewer1_web/app.go 271"),
-			expected: "web/app.go 271",
+			attr:     slog.String(slog.SourceKey, "gazelle++go_deps+com_github_jacobbrewer1_web/app.go 476"),
+			expected: "web/app.go 476",
 		},
 	}
 
