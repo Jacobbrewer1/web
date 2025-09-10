@@ -122,5 +122,9 @@ func (c *SecretPath) TransitDecrypt(ctx context.Context, data string) (string, e
 	if !ok {
 		return "", errors.New("unable to convert decrypted data to string")
 	}
-	return decryptDataStr, nil
+	decoded, err := base64.StdEncoding.DecodeString(decryptDataStr)
+	if err != nil {
+		return "", fmt.Errorf("unable to decode base64 plaintext: %w", err)
+	}
+	return string(decoded), nil
 }
