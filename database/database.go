@@ -37,11 +37,7 @@ func (d *ReplaceableDB) ReplaceDB(ctx context.Context, newDB *sqlx.DB) error {
 	// Close old connection after successful replacement
 	// Don't fail the replacement if old connection fails to close gracefully
 	if oldDB != nil {
-		if err := oldDB.Close(); err != nil {
-			// Log the error but don't fail the replacement
-			// In a real application, you'd use a proper logger here
-			fmt.Printf("Warning: failed to close old database connection: %v\n", err)
-		}
+		_ = oldDB.Close()
 	}
 
 	return nil
