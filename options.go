@@ -30,6 +30,7 @@ import (
 	"github.com/jacobbrewer1/web/k8s"
 	"github.com/jacobbrewer1/web/logging"
 	pkgsync "github.com/jacobbrewer1/web/sync"
+	"github.com/jacobbrewer1/web/utils"
 	"github.com/jacobbrewer1/web/vault"
 )
 
@@ -122,8 +123,8 @@ func WithDatabaseFromVault() StartOption {
 		}
 
 		connectionStr := database.MySQLConnectionStringFromVaultSecret(
-			vs.Data["username"].(string),
-			vs.Data["password"].(string),
+			utils.CastWithDefault(vs.Data["username"], ""),
+			utils.CastWithDefault(vs.Data["password"], ""),
 			vip.GetString("database.host"),
 			vip.GetInt("database.port"),
 			vip.GetString("database.name"),
@@ -158,8 +159,8 @@ func WithDatabaseFromVault() StartOption {
 					}
 
 					newConnectionStr := database.MySQLConnectionStringFromVaultSecret(
-						newVS.Data["username"].(string),
-						newVS.Data["password"].(string),
+						utils.CastWithDefault(newVS.Data["username"], ""),
+						utils.CastWithDefault(newVS.Data["password"], ""),
 						vip.GetString("database.host"),
 						vip.GetInt("database.port"),
 						vip.GetString("database.name"),
