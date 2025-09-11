@@ -7,6 +7,7 @@ import (
 	"time"
 
 	hashivault "github.com/hashicorp/vault/api"
+	"go.uber.org/multierr"
 )
 
 const (
@@ -140,10 +141,15 @@ func handleWatcherResult(l *slog.Logger, result renewResult, onExpire ...func() 
 		return nil
 	case result&expiring != 0:
 		l.Debug("result is expiring", slog.Int(loggingKeyResult, int(result)))
+		var merr error
 		for _, f := range onExpire {
 			if err := f(); err != nil {
-				return fmt.Errorf("onExpire function failed: %w", err)
+				merr = multierr.Append(merr, err)
+				continue
 			}
+		}
+		if merr != nil {
+			return merr
 		}
 		return nil
 	default:
