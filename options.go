@@ -140,9 +140,9 @@ func WithDatabaseFromVault() StartOption {
 		a.l.Info("database connection established")
 		a.db = vaultDB
 
-		go func() {
+		if err := WithIndefiniteAsyncTask("vault_database_lease_renewer", func(ctx context.Context) {
 			if err := vault.RenewLease(
-				a.baseCtx,
+				ctx,
 				logging.LoggerWithComponent(a.l, "vault_database_lease_renewer"),
 				vc,
 				"database_connection",
@@ -183,7 +183,9 @@ func WithDatabaseFromVault() StartOption {
 			); err != nil {
 				a.l.Error("error renewing database lease", slog.String("error", err.Error()))
 			}
-		}()
+		})(a); err != nil {
+			return fmt.Errorf("error starting vault database lease renewer: %w", err)
+		}
 
 		return nil
 	}
