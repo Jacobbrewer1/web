@@ -2,14 +2,12 @@ package vault
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
 	hashivault "github.com/hashicorp/vault/api"
-
-	"github.com/jacobbrewer1/web/logging"
+	"go.uber.org/multierr"
 )
 
 const (
@@ -65,16 +63,14 @@ func RenewLease(
 			return nil
 		}
 
-		err = handleWatcherResult(l, res, func() {
-			newCreds, err := renewFunc()
+		if err := handleWatcherResult(l, res, func() error {
+			newCredentials, err := renewFunc()
 			if err != nil {
-				l.Error("unable to renew credentials", slog.String(logging.KeyError, err.Error()))
-				panic("unable to renew credentials") // Panic over os exit. This allows for the program unwind correctly.
+				return fmt.Errorf("unable to renew credentials: %w", err)
 			}
-
-			currentCredentials = newCreds
-		})
-		if err != nil {
+			currentCredentials = newCredentials
+			return nil
+		}); err != nil {
 			return fmt.Errorf("unable to handle watcher result: %w", err)
 		}
 
@@ -138,18 +134,22 @@ func monitorWatcher(ctx context.Context, l *slog.Logger, token string, watcher *
 }
 
 // handleWatcherResult processes the result of the watcher and executes
-func handleWatcherResult(l *slog.Logger, result renewResult, onExpire ...func()) error {
+func handleWatcherResult(l *slog.Logger, result renewResult, onExpire ...func() error) error {
 	switch {
 	case result&exitRequested != 0:
 		l.Debug("result is exitRequested", slog.Int(loggingKeyResult, int(result)))
 		return nil
 	case result&expiring != 0:
 		l.Debug("result is expiring", slog.Int(loggingKeyResult, int(result)))
-		if len(onExpire) == 0 {
-			return errors.New("no onExpire functions provided")
-		}
+		var merr error
 		for _, f := range onExpire {
-			f()
+			if err := f(); err != nil {
+				merr = multierr.Append(merr, err)
+				continue
+			}
+		}
+		if merr != nil {
+			return merr
 		}
 		return nil
 	default:
