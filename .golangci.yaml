@@ -83,7 +83,7 @@ linters:
           exclude:
             - ""
     sloglint:
-      attr-only: true
+      attr-only: false
       static-msg: true
       no-raw-keys: false
       key-naming-case: snake
