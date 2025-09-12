@@ -193,18 +193,27 @@ func WithDatabaseFromVault() StartOption {
 
 // WithInClusterKubeClient is a StartOption that sets up the in-cluster Kubernetes client.
 func WithInClusterKubeClient() StartOption {
+	// Default QPS and Burst values are set to 5 and 10 respectively. This should prevent the client from being rate
+	// limited by the Kubernetes API server under normal operation. These values can be adjusted based on the
+	// application's requirements and the cluster's capacity.
+	return WithRateLimitedInClusterKubernetesClient(5, 10)
+}
+
+// WithRateLimitedInClusterKubernetesClient configures the app to set up an in-cluster Kubernetes client with the specified QPS and Burst.
+func WithRateLimitedInClusterKubernetesClient(qps float32, burst int) StartOption {
 	return func(a *App) error {
 		cfg, err := rest.InClusterConfig()
 		if err != nil {
-			return fmt.Errorf("failed to get in-cluster config: %w", err)
+			return err
 		}
 
-		kubeClient, err := kubernetes.NewForConfig(cfg)
+		cfg.QPS = qps
+		cfg.Burst = burst
+
+		a.kubeClient, err = kubernetes.NewForConfig(cfg)
 		if err != nil {
-			return fmt.Errorf("failed to create kube client: %w", err)
+			return err
 		}
-
-		a.kubeClient = kubeClient
 		return nil
 	}
 }
