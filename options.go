@@ -199,7 +199,16 @@ func WithInClusterKubeClient() StartOption {
 	return WithRateLimitedInClusterKubernetesClient(5, 10)
 }
 
-// WithRateLimitedInClusterKubernetesClient configures the app to set up an in-cluster Kubernetes client with the specified QPS and Burst.
+// WithRateLimitedInClusterKubernetesClient configures the app to set up an in-cluster Kubernetes client with rate limiting.
+//
+// Parameters:
+//   qps   - The maximum number of queries per second (QPS) allowed for the Kubernetes client.
+//           This controls the rate at which requests are sent to the Kubernetes API server.
+//           Typical values range from 1 to 100, depending on the application's needs and the cluster's capacity.
+//   burst - The maximum burst of requests allowed. This is the maximum number of requests that can be sent in a short period.
+//           Burst should generally be set higher than QPS to allow for short spikes in request rate.
+//           Typical values are 2x to 5x the QPS value.
+// Choose values appropriate for your application's expected load and the API server's limits to avoid rate limiting.
 func WithRateLimitedInClusterKubernetesClient(qps float32, burst int) StartOption {
 	return func(a *App) error {
 		cfg, err := rest.InClusterConfig()
