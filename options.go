@@ -204,7 +204,7 @@ func WithRateLimitedInClusterKubernetesClient(qps float32, burst int) StartOptio
 	return func(a *App) error {
 		cfg, err := rest.InClusterConfig()
 		if err != nil {
-			return err
+			return fmt.Errorf("error getting in-cluster config: %w", err)
 		}
 
 		cfg.QPS = qps
@@ -212,7 +212,7 @@ func WithRateLimitedInClusterKubernetesClient(qps float32, burst int) StartOptio
 
 		a.kubeClient, err = kubernetes.NewForConfig(cfg)
 		if err != nil {
-			return err
+			return fmt.Errorf("error creating in-cluster kube client: %w", err)
 		}
 		return nil
 	}
