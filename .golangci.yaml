@@ -22,6 +22,8 @@ linters:
       ignore-calls: true
     gocritic:
       enable-all: true
+      disabled-checks:
+        - unnamedResult
     iface:
       enable:
         - identical
@@ -81,8 +83,9 @@ linters:
           exclude:
             - ""
     sloglint:
-#      attr-only: true
+      attr-only: true
       static-msg: true
+      no-raw-keys: false
       key-naming-case: snake
       forbidden-keys:
         - time
@@ -101,26 +104,10 @@ linters:
           alias: pkgslices
         - pkg: github.com/jacobbrewer1/web/sync
           alias: pkgsync
-        - pkg: k8s.io/client-go/listers/core/v1
-          alias: listersv1
-        - pkg: k8s.io/api/core/v1
-          alias: corev1
-        - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
-          alias: metav1
-        - pkg: k8s.io/api/apps/v1
-          alias: appsv1
-        - pkg: k8s.io/apimachinery/pkg/labels
-          alias: k8slabels
-        - pkg: k8s.io/apimachinery/pkg/api/errors
-          alias: k8serrors
-        - pkg: k8s.io/api/events/v1
-          alias: eventsv1
-        - pkg: k8s.io/apimachinery/pkg/types
-          alias: k8stypes
-        - pkg: k8s.io/client-go/tools/cache
-          alias: k8scache
-        - pkg: github.com/oapi-codegen/runtime/types
-          alias: oapi
+        - pkg: github.com/jacobbrewer1/storepro-go/pkg/utils/testing
+          alias: testutils
+        - pkg: github.com/k3d-io/k3d/v5/pkg/types
+          alias: k3dcommon
   exclusions:
     generated: lax
     presets:
@@ -136,6 +123,9 @@ linters:
       - linters:
           - goconst
         path: (.+)_test\.go
+      - linters:
+          - unused
+        path: magefiles/* # Exclude magefiles from unused checks as build targets are not imported
     paths:
       - third_party$
       - builtin$
@@ -143,9 +133,18 @@ linters:
 formatters:
   enable:
     - gofmt
+    - gci
   settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - blank
+        - dot
+        - prefix(github.com/jacobbrewer1)
+      custom-order: true
     gofmt:
-      simplify: true
+      simplify: false
       rewrite-rules:
         - pattern: interface{}
           replacement: any
