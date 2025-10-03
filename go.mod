@@ -16,7 +16,7 @@ require (
 	github.com/jacobbrewer1/goredis v0.1.7
 	github.com/jacobbrewer1/uhttp v0.0.12
 	github.com/jmoiron/sqlx v1.4.0
-	github.com/nats-io/nats.go v1.45.0
+	github.com/nats-io/nats.go v1.46.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/serialx/hashring v0.0.0-20200727003509-22c0c7ab6b1b
 	github.com/spf13/viper v1.21.0
