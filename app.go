@@ -521,7 +521,9 @@ func (a *App) RedisPool() goredis.Pool {
 func (a *App) WorkerPool(name string) pkgsync.WorkerPool {
 	v, ok := a.workerPools.Load(name)
 	if !ok {
-		a.l.Error("worker pool has not been registered", "name", name)
+		a.l.Error("worker pool has not been registered",
+			"name", name,
+		)
 		panic(fmt.Sprintf("worker pool '%s' has not been registered", name))
 	}
 

@@ -193,18 +193,36 @@ func WithDatabaseFromVault() StartOption {
 
 // WithInClusterKubeClient is a StartOption that sets up the in-cluster Kubernetes client.
 func WithInClusterKubeClient() StartOption {
+	// Default QPS and Burst values are set to 5 and 10 respectively. This should prevent the client from being rate
+	// limited by the Kubernetes API server under normal operation. These values can be adjusted based on the
+	// application's requirements and the cluster's capacity.
+	return WithRateLimitedInClusterKubernetesClient(5, 10)
+}
+
+// WithRateLimitedInClusterKubernetesClient configures the app to set up an in-cluster Kubernetes client with rate limiting.
+//
+// Parameters:
+//   qps   - The maximum number of queries per second (QPS) allowed for the Kubernetes client.
+//           This controls the rate at which requests are sent to the Kubernetes API server.
+//           Typical values range from 1 to 100, depending on the application's needs and the cluster's capacity.
+//   burst - The maximum burst of requests allowed. This is the maximum number of requests that can be sent in a short period.
+//           Burst should generally be set higher than QPS to allow for short spikes in request rate.
+//           Typical values are 2x to 5x the QPS value.
+// Choose values appropriate for your application's expected load and the API server's limits to avoid rate limiting.
+func WithRateLimitedInClusterKubernetesClient(qps float32, burst int) StartOption {
 	return func(a *App) error {
 		cfg, err := rest.InClusterConfig()
 		if err != nil {
-			return fmt.Errorf("failed to get in-cluster config: %w", err)
+			return fmt.Errorf("error getting in-cluster config: %w", err)
 		}
 
-		kubeClient, err := kubernetes.NewForConfig(cfg)
+		cfg.QPS = qps
+		cfg.Burst = burst
+
+		a.kubeClient, err = kubernetes.NewForConfig(cfg)
 		if err != nil {
-			return fmt.Errorf("failed to create kube client: %w", err)
+			return fmt.Errorf("error creating in-cluster kube client: %w", err)
 		}
-
-		a.kubeClient = kubeClient
 		return nil
 	}
 }
