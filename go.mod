@@ -8,7 +8,7 @@ require (
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-sql-driver/mysql v1.9.3
-	github.com/gomodule/redigo v1.9.2
+	github.com/gomodule/redigo v1.9.3
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/vault/api v1.22.0
