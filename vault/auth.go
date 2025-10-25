@@ -8,6 +8,8 @@ import (
 
 	hashivault "github.com/hashicorp/vault/api"
 	kubeauth "github.com/hashicorp/vault/api/auth/kubernetes"
+
+	"github.com/jacobbrewer1/web/logging"
 )
 
 // kubernetesLogin authenticates with Vault using the Kubernetes auth method.
@@ -47,6 +49,8 @@ func (c *client) renewAuthInfo() {
 		return authInfo, nil
 	})
 	if err != nil {
-		c.l.Error("unable to renew auth info", "error", err)
+		c.l.Error("unable to renew auth info",
+			logging.KeyError, err,
+		)
 	}
 }
